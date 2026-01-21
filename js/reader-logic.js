@@ -6,7 +6,8 @@ const BASE_URL = 'https://api.mangadex.org';
 
 let state = {
     chapterId: null,
-    pages: [],
+    pagesHQ: [],       
+    pagesSaver: [],    
     mode: 'vertical',
     dualPage: false,
     currentIndex: 0,
@@ -14,7 +15,10 @@ let state = {
     hash: '',
     mangaId: null,
     mangaTitle: '',
-    chapterNum: ''
+    chapterNum: '',
+    // 🔥 NUEVO: IDs para navegar
+    nextChapterId: null,
+    prevChapterId: null
 };
 
 // --- INICIO ---
@@ -34,43 +38,42 @@ window.toggleUI = function() {
 
 async function initReader() {
     try {
-        // PASO 1: Conseguir ID del Manga y Metadatos
-        console.log("🕵️‍♂️ Buscando información del manga...");
+        // 1. Metadatos (Aquí obtenemos el ID del manga)
+        console.log("🕵️‍♂️ Cargando info...");
         await fetchMetadata(); 
 
-        // PASO 2: Cargar Servidor de Imágenes (At-Home)
-        // Usamos PROXY aquí porque es una llamada a la API (texto/json)
+        // 2. 🔥 NUEVO: Calcular Siguiente/Anterior Capítulo
+        if (state.mangaId) {
+            await setupChapterNavigation();
+        }
+
+        // 3. Imágenes
         const url = `${BASE_URL}/at-home/server/${state.chapterId}`;
         const res = await fetch(PROXY + encodeURIComponent(url));
         const json = await res.json();
 
         state.baseUrl = json.baseUrl;
         state.hash = json.chapter.hash;
-        
-        // --- 🔥 CORRECCIÓN AQUÍ 🔥 ---
-        // NO USAMOS PROXY PARA LAS IMÁGENES. Vamos directo al servidor de MangaDex.
-        state.pages = json.chapter.data.map(filename => {
-            return `${state.baseUrl}/data/${state.hash}/${filename}`;
-        });
+        state.pagesHQ = json.chapter.data;         
+        state.pagesSaver = json.chapter.dataSaver; 
 
-        // Actualizar UI
+        // UI Updates
         const totalSpan = document.getElementById('total-pages');
-        if (totalSpan) totalSpan.innerText = state.pages.length;
+        if (totalSpan) totalSpan.innerText = state.pagesHQ.length;
         
         const loader = document.getElementById('loader');
         if (loader) loader.style.display = 'none';
 
-        // PASO 3: Renderizar
+        // 4. Renderizar
         render();
 
-        // Ocultar UI después de 2 seg
         setTimeout(() => {
             document.body.classList.add('ui-hidden');
         }, 2000);
 
     } catch (error) {
         console.error("Error inicializando:", error);
-        alert("Error cargando el capítulo. Revisa la consola.");
+        alert("Error cargando el capítulo. Intenta recargar.");
     }
 }
 
@@ -84,9 +87,7 @@ async function fetchMetadata() {
         state.chapterNum = attr.chapter || "?";
         
         const mangaRel = json.data.relationships.find(r => r.type === 'manga');
-        if (mangaRel) {
-            state.mangaId = mangaRel.id;
-        }
+        if (mangaRel) state.mangaId = mangaRel.id;
 
         const chapTitleUi = document.getElementById('chapter-title');
         if (chapTitleUi) {
@@ -102,15 +103,48 @@ async function fetchMetadata() {
                 
                 const mangaTitleUi = document.getElementById('manga-title-ui');
                 if (mangaTitleUi) mangaTitleUi.innerText = state.mangaTitle;
-            } catch (err) {
-                console.warn("No se pudo cargar título manga, usando ID como referencia");
-                state.mangaTitle = "Manga"; 
-            }
+            } catch (err) { state.mangaTitle = "Manga"; }
         }
+    } catch(e) { console.error(e); }
+}
 
-    } catch(e) { 
-        console.error("Error en fetchMetadata:", e);
+// --- 🔥 NUEVO: LÓGICA DE NAVEGACIÓN ENTRE CAPÍTULOS ---
+async function setupChapterNavigation() {
+    try {
+        // Pedimos la lista de capítulos (feed) ordenada descendente (más nuevo primero)
+        // Limitamos a 500 para cubrir mangas largos. Si es One Piece, quizás requiera más lógica, pero esto cubre el 99%.
+        const url = `${BASE_URL}/manga/${state.mangaId}/feed?translatedLanguage[]=es&translatedLanguage[]=es-la&order[chapter]=desc&limit=500`;
+        const res = await fetch(PROXY + encodeURIComponent(url));
+        const json = await res.json();
+        const chapters = json.data;
+
+        // Encontrar índice del capítulo actual
+        const currentIndex = chapters.findIndex(ch => ch.id === state.chapterId);
+
+        if (currentIndex !== -1) {
+            // Como la lista es DESCENDENTE (10, 9, 8...):
+            // - El ANTERIOR (Cap 9 -> 8) está en el índice SIGUIENTE (idx + 1)
+            // - El SIGUIENTE (Cap 9 -> 10) está en el índice ANTERIOR (idx - 1)
+            
+            if (currentIndex > 0) {
+                state.nextChapterId = chapters[currentIndex - 1].id;
+            }
+            
+            if (currentIndex < chapters.length - 1) {
+                state.prevChapterId = chapters[currentIndex + 1].id;
+            }
+
+            console.log("Navegación:", { prev: state.prevChapterId, next: state.nextChapterId });
+            updateNavUI();
+        }
+    } catch (e) {
+        console.error("Error calculando navegación:", e);
     }
+}
+
+function updateNavUI() {
+    // Aquí podrías habilitar botones en el header si tuvieras flechas ahí
+    // Por ahora nos centraremos en el botón al final del renderizado vertical
 }
 
 // --- RENDERIZADO ---
@@ -138,30 +172,24 @@ function render() {
     canvas.innerHTML = '';
     canvas.className = state.mode === 'vertical' ? 'mode-vertical pb-20' : 'mode-horizontal bg-black';
     
-    const navLeft = document.getElementById('nav-left');
-    const navCenter = document.getElementById('nav-center');
-    const navRight = document.getElementById('nav-right');
-    const horizControls = document.getElementById('horizontal-controls');
-
+    const els = ['nav-left', 'nav-center', 'nav-right', 'horizontal-controls'];
     if (state.mode === 'vertical') {
-        if(navLeft) navLeft.style.display = 'none';
-        if(navCenter) navCenter.style.display = 'none';
-        if(navRight) navRight.style.display = 'none';
-        if(horizControls) horizControls.classList.add('hidden');
+        els.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
         document.body.style.overflowY = 'auto';
 
-        state.pages.forEach((url, index) => {
+        // 1. IMÁGENES
+        state.pagesHQ.forEach((filename, index) => {
             const img = document.createElement('img');
-            img.src = url;
             img.className = 'page-img';
             img.loading = 'lazy';
-            // IMPORTANTE: referrerPolicy ayuda a que MangaDex acepte la petición directa
             img.setAttribute('referrerpolicy', 'no-referrer'); 
             
-            // Manejador de errores por si una imagen específica falla
+            img.src = `${state.baseUrl}/data/${state.hash}/${filename}`;
+
             img.onerror = function() {
-                this.style.display = 'none'; // Ocultar o poner placeholder
-                console.error(`Error cargando imagen ${index + 1}`);
+                const saverFilename = state.pagesSaver[index];
+                const saverUrl = `${state.baseUrl}/data-saver/${state.hash}/${saverFilename}`;
+                if (this.src !== saverUrl) this.src = saverUrl;
             };
 
             img.dataset.index = index;
@@ -169,14 +197,29 @@ function render() {
             canvas.appendChild(img);
         });
         
+        // 2. 🔥 BOTÓN SIGUIENTE CAPÍTULO (Solo Vertical) 🔥
+        if (state.nextChapterId) {
+            const nextBtnDiv = document.createElement('div');
+            nextBtnDiv.className = "w-full max-w-3xl mx-auto mt-8 mb-12 px-4";
+            nextBtnDiv.innerHTML = `
+                <button onclick="window.location.href='reader.html?chapter=${state.nextChapterId}'" 
+                        class="w-full py-4 bg-primary hover:bg-[#7a1fd6] text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
+                    <span>Siguiente Capítulo</span>
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            `;
+            canvas.appendChild(nextBtnDiv);
+        } else {
+             const endDiv = document.createElement('div');
+             endDiv.className = "w-full text-center text-gray-500 mt-8 mb-12";
+             endDiv.innerHTML = "<p>Has llegado al último capítulo.</p>";
+             canvas.appendChild(endDiv);
+        }
+
         setupVerticalScrollSpy();
     } else {
-        if(navLeft) navLeft.style.display = 'block';
-        if(navCenter) navCenter.style.display = 'block';
-        if(navRight) navRight.style.display = 'block';
-        if(horizControls) horizControls.classList.remove('hidden');
+        els.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); });
         document.body.style.overflow = 'hidden';
-        
         renderHorizontalPage();
     }
 }
@@ -185,33 +228,48 @@ function renderHorizontalPage() {
     const canvas = document.getElementById('reader-canvas');
     canvas.innerHTML = '';
 
-    const img1Url = state.pages[state.currentIndex];
-    const img2Url = state.pages[state.currentIndex + 1];
-
     const wrapper = document.createElement('div');
     wrapper.className = state.dualPage ? 'dual-page-container' : 'flex justify-center w-full h-full';
 
-    const img1 = document.createElement('img');
-    img1.src = img1Url;
-    img1.setAttribute('referrerpolicy', 'no-referrer');
-    wrapper.appendChild(img1);
+    const createImg = (index) => {
+        if(index >= state.pagesHQ.length) return null;
+        const img = document.createElement('img');
+        const filename = state.pagesHQ[index];
+        img.src = `${state.baseUrl}/data/${state.hash}/${filename}`;
+        img.setAttribute('referrerpolicy', 'no-referrer');
+        img.onerror = function() {
+            const saverFilename = state.pagesSaver[index];
+            const saverUrl = `${state.baseUrl}/data-saver/${state.hash}/${saverFilename}`;
+            if (this.src !== saverUrl) this.src = saverUrl;
+        };
+        return img;
+    };
 
-    if (state.dualPage && img2Url) {
-        const img2 = document.createElement('img');
-        img2.src = img2Url;
-        img2.setAttribute('referrerpolicy', 'no-referrer');
-        wrapper.appendChild(img2);
+    const img1 = createImg(state.currentIndex);
+    if(img1) wrapper.appendChild(img1);
+
+    if (state.dualPage) {
+        const img2 = createImg(state.currentIndex + 1);
+        if(img2) wrapper.appendChild(img2);
     }
 
     canvas.appendChild(wrapper);
     updateProgress(state.currentIndex);
 }
 
+// --- NAVEGACIÓN HORIZONTAL (Modificada para saltar de cap) ---
 window.nextPage = function() {
     const increment = state.dualPage ? 2 : 1;
-    if (state.currentIndex + increment < state.pages.length) {
+    if (state.currentIndex + increment < state.pagesHQ.length) {
         state.currentIndex += increment;
         renderHorizontalPage();
+    } else {
+        // 🔥 SI ES LA ÚLTIMA PÁGINA
+        if (state.nextChapterId) {
+            if(confirm("¿Ir al siguiente capítulo?")) {
+                window.location.href = `reader.html?chapter=${state.nextChapterId}`;
+            }
+        }
     }
 };
 
@@ -264,7 +322,7 @@ function setupVerticalScrollSpy() {
 }
 
 function updateProgress(index) {
-    const total = state.pages.length;
+    const total = state.pagesHQ.length;
     const indicator = document.getElementById('page-indicator');
     const progressBar = document.getElementById('read-progress');
     
