@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>MangaZen Dashboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8c25f4", // Tu morado neón
+                        "primary-accent": "#0d33f2", // Azul eléctrico
+                        "background-dark": "#0f0f0f", // OLED Black
+                        "surface-dark": "#1E1E1E", // Tarjetas
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Ocultar scrollbar pero permitir scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Efecto Cristal (Glassmorphism) */
+        .glass-panel {
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark text-white h-screen flex overflow-hidden selection:bg-primary selection:text-white">
+
+    <aside class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-50">
+        <div>
+            <div class="flex items-center gap-3 mb-10">
+                <div
+                    class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(140,37,244,0.3)]">
+                    <span class="material-symbols-outlined text-[24px]">auto_stories</span>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight">MangaZen</h1>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="#"
+                    class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-medium shadow-lg shadow-primary/20">
+                    <span class="material-symbols-outlined fill-1">home</span> Inicio
+                </a>
+                <a href="library.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+                    <span class="material-symbols-outlined">bookmarks</span> Biblioteca
+                </a>
+                <a href="history.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+                    <span class="material-symbols-outlined">history</span> Historial
+                </a>
+                <a href="search.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
+                    <span class="material-symbols-outlined">explore</span> Explorar
+                </a>
+            </nav>
+        </div>
+
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+            <div class="size-10 rounded-full bg-cover bg-center"
+                style='background-image: url("https://i.pravatar.cc/150?img=11");'></div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold truncate">ADAN Admin</p>
+                <p class="text-xs text-gray-400">Premium</p>
+            </div>
+            <button id="logoutBtnDesktop" class="text-red-400 hover:bg-white/10 p-1.5 rounded-lg transition">
+                <span class="material-symbols-outlined text-[20px]">logout</span>
+            </button>
+        </div>
+    </aside>
+
+
+    <main class="flex-1 relative flex flex-col h-full overflow-hidden">
+
+        <header class="w-full glass-panel z-40 px-5 py-4 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="md:hidden relative">
+                    <div class="size-10 rounded-full bg-cover bg-center border-2 border-surface-dark"
+                        style='background-image: url("https://i.pravatar.cc/150?img=11");'></div>
+                    <div class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-[#0f0f0f] rounded-full">
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <span class="text-xs text-gray-400 font-medium md:hidden">Good Evening</span>
+                    <h2 class="text-white text-base md:text-xl font-bold leading-tight">
+                        <span class="md:hidden">ADAN</span>
+                        <span class="hidden md:inline">Explorar Mangas</span>
+                    </h2>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button
+                    class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-white">search</span>
+                </button>
+                <button
+                    class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors relative">
+                    <span class="material-symbols-outlined text-white">notifications</span>
+                    <span class="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto no-scrollbar pb-24 md:pb-10 p-4 md:p-8 space-y-8">
+
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold tracking-tight">Continuar Leyendo</h2>
+                    
+                </div>
+
+                <div id="continue-reading-container">
+                    <div class="p-6 text-center text-gray-500 bg-white/5 rounded-2xl border border-white/5">
+                        <p>No tienes lecturas recientes.</p>
+                        <a href="#manga-container" class="text-primary text-sm font-bold mt-2 inline-block">Explorar
+                            Mangas</a>
+                    </div>
+                </div>
+            </section>
+            <section class="mt-8 px-4 md:px-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-green-400">new_releases</span>
+            Recién Actualizados
+        </h2>
+        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Español</span>
+    </div>
+
+    <div id="latest-updates-container" class="flex overflow-x-auto flex-nowrap gap-4 overflow-x-auto pb-4 no-scrollbar snap-x">
+        <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+        <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+        <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+        <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+    </div>
+</section>
+<section class="mt-8 px-4 md:px-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-400">fiber_new</span>
+            Nuevos en el Catálogo
+        </h2>
+    </div>
+
+    <div id="new-mangas-container" 
+         class="flex flex-nowrap gap-4 overflow-x-auto pb-4 w-full no-scrollbar cursor-grab active:cursor-grabbing">
+        
+        <div class="shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+        <div class="shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+        <div class="shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+    </div>
+</section>
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold tracking-tight flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">trending_up</span>
+                        Tendencias en MangaDex
+                    </h2>
+                </div>
+
+                <div id="manga-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+
+    <nav
+        class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f0f0f]/95 backdrop-blur-xl border-t border-white/5 pb-safe pt-2 px-6 flex justify-between items-center z-50 h-20">
+        <button class="flex flex-col items-center gap-1 group w-12">
+            <span class="material-symbols-outlined text-primary text-[26px]">home</span>
+            <span class="text-[10px] font-medium text-primary">Inicio</span>
+        </button>
+        <button onclick="window.location.href='library.html'" class="flex flex-col items-center gap-1 group w-12 text-gray-500 hover:text-white">
+            <span class="material-symbols-outlined text-[26px]">library_books</span>
+            <span class="text-[10px] font-medium">Biblio</span>
+        </button>
+
+        <button onclick="window.location.href='search.html'"
+            class="flex items-center justify-center -mt-8 size-14 bg-primary text-white rounded-full shadow-[0_0_20px_rgba(140,37,244,0.4)] active:scale-95 transition-transform border-4 border-[#0f0f0f]">
+            <span class="material-symbols-outlined text-3xl">search</span>
+        </button>
+
+        <button onclick="window.location.href='hirtory.html'" class="flex flex-col items-center gap-1 group w-12 text-gray-500 hover:text-white">
+            <span class="material-symbols-outlined text-[26px]">history</span>
+            <span class="text-[10px] font-medium">History</span>
+        </button>
+        <button id="logoutBtnMobile"
+            class="flex flex-col items-center gap-1 group w-12 text-gray-500 hover:text-red-400">
+            <span class="material-symbols-outlined text-[26px]">logout</span>
+            <span class="text-[10px] font-medium">Salir</span>
+        </button>
+    </nav>
+
+
+    <script type="module">
+        import { checkSession, logoutUser } from './js/auth.js';
+        import { getPopularMangas, renderMangaGrid } from './js/api-mangadex.js';
+
+        // 1. Seguridad: Si no hay login, te saca
+        checkSession();
+
+        // 2. Botones de Logout (El de PC y el de Móvil)
+        document.getElementById('logoutBtnDesktop')?.addEventListener('click', logoutUser);
+        document.getElementById('logoutBtnMobile')?.addEventListener('click', logoutUser);
+
+        // 3. Cargar Mangas de la API
+        async function init() {
+            const mangas = await getPopularMangas();
+            renderMangaGrid(mangas, 'manga-container');
+        }
+
+        init();
+    </script>
+    <script type="module" src="./js/home-logic.js"></script>
+</body>
+
+</html>

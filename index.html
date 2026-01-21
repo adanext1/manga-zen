@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Secure Access Login</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8c25f4",
+                        "background-light": "#f7f5f8",
+                        "background-dark": "#0f0f0f",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif
+        }
+
+        .oled-bg {
+            background-color: #0f0f0f;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+            background-size: 40px 40px
+        }
+
+        .glass-card {
+            background: rgba(26, 16, 35, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(140, 37, 244, 0.2);
+            box-shadow: 0 0 40px rgba(140, 37, 244, 0.15)
+        }
+
+        .manga-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuAtpNedXyu3aURwLFYny2kH3k2M_1m-IjoC2R9OwV8xVyimA6wjBqficTfsHBagSRfJNkqEnCqCKvw0FSzfM4V0gVSEtGuC5q4xy3wjztN_WnqggOjeJaovd04SdzwSEL0rbt-DPARAqPLAq0FhVQGWZIuvEc6nMzgZ8_ZJfRfc9yqhhmG8WSdfrimG1gb0CkUT8pF9AowSgLwJnhctCj0xpABE0fTi95LK9KbH9ESozc4AGKO517bYkDfQVPCGgQxHVWe6V_0QzZY);
+            background-size: cover;
+            mix-blend-mode: luminosity;
+            z-index: 0
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark font-display text-white overflow-hidden">
+    <!-- Abstract Manga Pattern Overlay -->
+    <div class="manga-overlay" data-alt="Abstract manga panel textures and patterns"></div>
+    <div class="relative flex h-screen w-full flex-col items-center justify-center px-6 z-10">
+        <!-- Header / Logo Area -->
+        <div class="mb-10 text-center">
+            <div
+                class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 border border-primary/30 mb-4 shadow-[0_0_20px_rgba(140,37,244,0.3)]">
+                <span class="material-symbols-outlined text-primary text-4xl">auto_stories</span>
+            </div>
+            <h1 class="text-white tracking-tight text-[32px] font-bold leading-tight">Private Reader</h1>
+            <p class="text-[#ad90cb] text-sm mt-1">Authorized Access Only</p>
+        </div>
+        <!-- Glassmorphic Login Card -->
+        <div class="glass-card w-full max-w-[400px] rounded-xl p-8 flex flex-col gap-6">
+            <div class="space-y-4">
+                <!-- Access Key Field -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-white/70 text-sm font-medium pl-1">Access Key or Email</label>
+                    <div class="relative group">
+                        <input id="email"
+                            class="form-input flex w-full rounded-xl text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#4d3168] bg-[#1a1023]/80 focus:border-primary h-14 placeholder:text-[#ad90cb]/50 px-4 text-base font-normal transition-all"
+                            placeholder="Enter your credentials" type="text" />
+                    </div>
+                </div>
+                <!-- Password Field -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-white/70 text-sm font-medium pl-1">Password</label>
+                    <div class="flex w-full items-stretch">
+                        <input id="password"
+                            class="form-input flex w-full min-w-0 flex-1 rounded-xl rounded-r-none border-r-0 text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#4d3168] bg-[#1a1023]/80 focus:border-primary h-14 placeholder:text-[#ad90cb]/50 px-4 text-base font-normal transition-all"
+                            placeholder="••••••••" type="password" />
+                        <div
+                            class="text-[#ad90cb] flex border border-[#4d3168] bg-[#1a1023]/80 items-center justify-center px-4 rounded-r-xl border-l-0 cursor-pointer hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-[22px]">visibility</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Forgot Action -->
+            <div class="flex justify-end -mt-2">
+                <button class="text-xs text-primary/80 hover:text-primary font-medium">Forgot Access Key?</button>
+            </div>
+            <!-- Login Button -->
+            <div class="pt-2">
+                <button id="loginBtn"
+                    class="w-full flex cursor-pointer items-center justify-center rounded-xl h-14 bg-primary hover:bg-primary/90 text-white text-lg font-bold tracking-wide transition-all shadow-[0_0_25px_rgba(140,37,244,0.4)] active:scale-[0.98]">
+                    <span>Enter Library</span>
+                    <span class="material-symbols-outlined ml-2 text-[20px]">login</span>
+                </button>
+            </div>
+        </div>
+        <!-- Footer / Privacy Note -->
+        <div class="mt-12 flex flex-col items-center gap-2">
+            <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                <span class="material-symbols-outlined text-[16px] text-[#ad90cb]">lock</span>
+                <span class="text-[#ad90cb] text-[12px] font-medium uppercase tracking-widest">Privacy First</span>
+            </div>
+            <p class="text-[#ad90cb]/40 text-[11px] text-center max-w-[240px] leading-relaxed">
+                Zero-knowledge encryption enabled. <br /> Your reading activity is never tracked.
+            </p>
+        </div>
+    </div>
+    <!-- Decorative Gradient Glows -->
+    <div
+        class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none">
+    </div>
+    <div
+        class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none">
+    </div>
+    <script type="module">
+    import { checkSession, loginUser } from './js/auth.js';
+
+    // 1. Verificar sesión al cargar (Si ya estás dentro, te manda al dashboard)
+    checkSession();
+
+    // 2. Lógica del Botón Entrar
+    const loginBtn = document.getElementById('loginBtn');
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
+
+    loginBtn.addEventListener('click', async () => {
+        const email = emailInput.value;
+        const pass = passInput.value;
+        const btnText = loginBtn.querySelector('span'); // El texto dentro del botón
+
+        if (!email || !pass) {
+            alert("Por favor ingresa usuario y contraseña");
+            return;
+        }
+
+        // Efecto de "Cargando..."
+        const originalText = btnText.innerText;
+        btnText.innerText = "Verifying...";
+        loginBtn.classList.add('opacity-70', 'cursor-not-allowed');
+
+        // Intentar Login
+        const success = await loginUser(email, pass);
+
+        if (!success) {
+            // Si falla, regresamos el botón a la normalidad
+            btnText.innerText = originalText;
+            loginBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+    });
+
+    // 3. Lógica para mostrar/ocultar contraseña (El Ojito)
+    const toggleBtn = document.getElementById('togglePassword');
+    const icon = toggleBtn.querySelector('span');
+
+    toggleBtn.addEventListener('click', () => {
+        if (passInput.type === "password") {
+            passInput.type = "text";
+            icon.innerText = "visibility_off"; // Cambia el icono
+            icon.classList.add('text-primary'); // Lo pone morado
+        } else {
+            passInput.type = "password";
+            icon.innerText = "visibility";
+            icon.classList.remove('text-primary');
+        }
+    });
+
+    // Extra: Permitir dar Enter en el teclado para entrar
+    passInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+    });
+</script>
+</body>
+
+</html>

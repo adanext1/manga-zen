@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Lector MangaZen</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#8c25f4", "bg-dark": "#0f0f0f" }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0f0f0f; color: white; margin: 0; user-select: none; }
+        
+        /* MAGIA: Cuando el body tiene la clase 'ui-hidden', todo lo que sea 'reader-ui' desaparece */
+        .ui-hidden .reader-ui { 
+            opacity: 0; 
+            pointer-events: none; 
+            transform: translateY(-10px); /* Pequeño efecto de salida hacia arriba */
+        }
+        /* La barra de abajo baja al ocultarse */
+        .ui-hidden #bottom-bar {
+            transform: translateY(10px) translateX(-50%);
+        }
+
+        /* Estilos de Modos */
+        .mode-vertical .page-img { display: block; width: 100%; max-width: 800px; margin: 0 auto; }
+        .mode-horizontal { height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .mode-horizontal img { max-height: 100vh; max-width: 100%; object-fit: contain; }
+        .dual-page-container { display: flex; gap: 4px; justify-content: center; width: 100%; }
+    </style>
+</head>
+
+<body class="bg-bg-dark overflow-hidden">
+
+    <div id="loader" class="fixed inset-0 flex flex-col items-center justify-center z-[60] bg-bg-dark text-white">
+        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="animate-pulse font-sans text-sm tracking-widest uppercase">Cargando...</p>
+    </div>
+
+    <div id="top-bar" class="reader-ui fixed top-0 left-0 right-0 bg-black/90 backdrop-blur-md p-4 pt-4 flex justify-between items-center z-50 transition-all duration-300 border-b border-white/5">
+        <button onclick="history.back()" class="text-white hover:text-primary transition">
+            <span class="material-symbols-outlined">arrow_back_ios_new</span>
+        </button>
+        <div class="text-center">
+            <h2 class="text-xs text-gray-400 font-bold uppercase tracking-wider">MangaZen</h2>
+            <h1 id="chapter-title" class="text-sm font-bold truncate max-w-[200px] text-white">...</h1>
+        </div>
+        <button id="settings-btn" class="text-white hover:text-primary transition">
+            <span class="material-symbols-outlined">tune</span>
+        </button>
+    </div>
+
+    <div id="settings-modal" class="reader-ui fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hidden flex-col items-end pt-20 px-4 transition-opacity duration-300">
+        <div class="bg-[#1E1E1E] border border-white/10 rounded-xl p-4 w-64 shadow-2xl">
+            <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Modo de Lectura</h3>
+            <div class="flex flex-col gap-2">
+                <button onclick="changeMode('vertical')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition text-left group">
+                    <span class="material-symbols-outlined text-gray-400 group-hover:text-primary">smartphone</span>
+                    <span class="text-sm">Cascada (Vertical)</span>
+                </button>
+                <button onclick="changeMode('horizontal')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition text-left group">
+                    <span class="material-symbols-outlined text-gray-400 group-hover:text-primary">menu_book</span>
+                    <span class="text-sm">Paginado (Horizontal)</span>
+                </button>
+            </div>
+            <div class="h-px bg-white/10 my-3"></div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-300">Doble Página (PC)</span>
+                <button id="dual-page-toggle" onclick="toggleDualPage()" class="text-gray-500 hover:text-primary">
+                    <span class="material-symbols-outlined">toggle_off</span>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 w-full" onclick="document.getElementById('settings-modal').classList.add('hidden')"></div>
+    </div>
+
+    <div id="reader-canvas" class="mode-vertical min-h-screen relative z-10 outline-none" tabindex="0"></div>
+
+    <div id="nav-left" class="fixed top-0 bottom-0 left-0 w-[20%] z-30 hidden cursor-pointer" title="Anterior"></div>
+    
+    <div id="nav-center" class="fixed top-0 bottom-0 left-[20%] right-[20%] z-30 hidden cursor-pointer" title="Menú"></div>
+    
+    <div id="nav-right" class="fixed top-0 bottom-0 right-0 w-[20%] z-30 hidden cursor-pointer" title="Siguiente"></div>
+
+
+    <div id="bottom-bar" class="reader-ui fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-[#141414]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl z-50 transition-all duration-300">
+        <div class="flex justify-between items-end mb-2 px-1">
+            <span id="page-indicator" class="text-xs font-bold text-primary">Página 1</span>
+            <span id="total-pages" class="text-xs font-bold text-gray-500">--</span>
+        </div>
+        <div class="relative h-1.5 bg-white/10 rounded-full overflow-hidden w-full cursor-pointer">
+            <div id="read-progress" class="h-full bg-gradient-to-r from-primary to-purple-400 w-0 transition-all duration-300 shadow-[0_0_10px_rgba(140,37,244,0.6)]"></div>
+        </div>
+        <div id="horizontal-controls" class="hidden flex justify-between items-center mt-4 pt-2 border-t border-white/5">
+            <button onclick="prevPage()" class="p-2 hover:bg-white/10 rounded-full transition"><span class="material-symbols-outlined">chevron_left</span></button>
+            <span class="text-[10px] uppercase tracking-widest text-gray-500">Navegación</span>
+            <button onclick="nextPage()" class="p-2 hover:bg-white/10 rounded-full transition"><span class="material-symbols-outlined">chevron_right</span></button>
+        </div>
+    </div>
+
+    <script type="module" src="./js/reader-logic.js"></script>
+    <script>
+        // Toggle simple para el botón de ajustes
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            const modal = document.getElementById('settings-modal');
+            if(modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                // Al abrir ajustes, aseguramos que la UI esté visible
+                document.body.classList.remove('ui-hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

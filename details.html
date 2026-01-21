@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Detalles del Manga</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8c25f4",
+                        "background-dark": "#0f0f0f",
+                        "surface-dark": "#1E1E1E",
+                    },
+                    fontFamily: { "display": ["Plus Jakarta Sans", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos Base */
+        body { background-color: #0f0f0f; color: white; min-height: 100vh; }
+        .glass { background: rgba(30, 30, 30, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+
+<body class="bg-background-dark font-display text-white selection:bg-primary selection:text-white">
+
+<div class="fixed top-0 left-0 right-0 z-50 glass px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+        <button onclick="window.history.back()" class="material-symbols-outlined cursor-pointer hover:text-primary transition">arrow_back_ios</button>
+        <h2 id="nav-title" class="text-lg font-bold tracking-tight truncate max-w-[200px] opacity-0 transition-opacity duration-300">Cargando...</h2>
+    </div>
+    <div class="flex gap-4">
+        <button class="material-symbols-outlined cursor-pointer hover:text-primary transition">bookmark_border</button>
+        <button class="material-symbols-outlined cursor-pointer hover:text-primary transition">share</button>
+    </div>
+</div>
+
+<main class="pb-24">
+    <div class="relative w-full h-[50vh] min-h-[400px] overflow-hidden group">
+        <div id="manga-bg" class="absolute inset-0 bg-cover bg-center opacity-50 scale-110 blur-lg transition-transform duration-700 group-hover:scale-100" 
+             style="background-image: url('assets/placeholder.jpg');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/60 to-transparent"></div>
+        
+        <div class="absolute bottom-0 left-0 w-full p-6 flex flex-col md:flex-row items-start md:items-end gap-6 z-10">
+            <div class="w-40 h-60 rounded-xl shadow-2xl overflow-hidden border-2 border-white/10 shrink-0 mx-auto md:mx-0 relative group-hover:-translate-y-2 transition-transform duration-500">
+                <img id="manga-cover" alt="Cover" class="w-full h-full object-cover" src="https://via.placeholder.com/200x300?text=Loading..." referrerpolicy="no-referrer"/>
+            </div>
+            
+            <div class="flex flex-col gap-2 pb-2 text-center md:text-left w-full">
+                <div class="flex gap-2 justify-center md:justify-start flex-wrap">
+                    <span id="manga-status" class="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase border border-green-500/30">...</span>
+                    <span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase border border-primary/30">Manga</span>
+                </div>
+                
+                <h1 id="manga-title" class="text-3xl md:text-5xl font-black leading-none tracking-tight shadow-black drop-shadow-lg">
+                    Cargando...
+                </h1>
+                
+                <p id="manga-author" class="text-sm text-gray-300 font-medium">...</p>
+                
+                <div class="flex items-center justify-center md:justify-start gap-1 text-yellow-400 mt-1">
+                    <span class="material-symbols-outlined text-sm fill-1">star</span>
+                    <span class="text-sm font-bold text-white">4.9</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-6 py-6 flex flex-col md:flex-row gap-3 -mt-4 relative z-20">
+        <button id="read-btn" class="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(140,37,244,0.3)] transition-all active:scale-95">
+            <span class="material-symbols-outlined">menu_book</span>
+            Leer Primer Capítulo
+        </button>
+        <div class="flex gap-3">
+             <button id="fav-btn" class="flex-1 md:w-auto px-6 py-3 bg-surface-dark text-white rounded-xl flex items-center justify-center border border-white/5 hover:bg-white/10 transition">
+                <span class="material-symbols-outlined">library_add</span>
+                <span class="ml-2 md:hidden">Guardar</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="px-6 space-y-8 max-w-5xl mx-auto">
+        
+        <div class="glass p-6 rounded-2xl relative overflow-hidden">
+            <h3 class="font-bold text-gray-300 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">info</span> Sinopsis
+            </h3>
+            <p id="manga-desc" class="text-sm text-gray-400 leading-relaxed line-clamp-4 transition-all duration-300">
+                Buscando información del manga...
+            </p>
+            <button id="toggle-desc" class="text-primary text-xs font-bold mt-2 hover:underline hidden">Leer más</button>
+        </div>
+
+        <div>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined">list</span> Capítulos
+                </h3>
+                <button class="text-xs bg-white/5 px-3 py-1 rounded-full hover:bg-white/10 transition">Invertir Orden</button>
+            </div>
+
+            <div id="chapters-container" class="space-y-3">
+                <div class="animate-pulse flex items-center justify-between p-4 bg-surface-dark rounded-xl border border-white/5">
+                    <div class="h-4 bg-white/10 rounded w-1/3"></div>
+                    <div class="h-8 w-8 bg-white/10 rounded-full"></div>
+                </div>
+                <div class="animate-pulse flex items-center justify-between p-4 bg-surface-dark rounded-xl border border-white/5">
+                    <div class="h-4 bg-white/10 rounded w-1/2"></div>
+                    <div class="h-8 w-8 bg-white/10 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pt-4 border-t border-white/5">
+            <h3 class="text-lg font-bold mb-4">Comentarios de la Comunidad</h3>
+            <div class="bg-surface-dark/50 p-6 rounded-xl text-center border border-white/5 border-dashed">
+                <span class="material-symbols-outlined text-gray-600 text-4xl mb-2">forum</span>
+                <p class="text-gray-500 text-sm">Conecta Supabase para habilitar los comentarios.</p>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script type="module" src="./js/details-logic.js"></script>
+
+<script>
+    // Pequeño script visual para expandir la descripción
+    const desc = document.getElementById('manga-desc');
+    const toggle = document.getElementById('toggle-desc');
+    
+    toggle.addEventListener('click', () => {
+        if (desc.classList.contains('line-clamp-4')) {
+            desc.classList.remove('line-clamp-4');
+            toggle.textContent = "Leer menos";
+        } else {
+            desc.classList.add('line-clamp-4');
+            toggle.textContent = "Leer más";
+        }
+    });
+</script>
+
+</body>
+</html>
