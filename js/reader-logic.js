@@ -34,18 +34,12 @@ window.toggleUI = function() {
 
 async function initReader() {
     try {
-        // PASO 1: Conseguir ID del Manga y Metadatos (PRIORIDAD MÁXIMA) 🚨
+        // PASO 1: Conseguir ID del Manga y Metadatos
         console.log("🕵️‍♂️ Buscando información del manga...");
         await fetchMetadata(); 
 
-        if (!state.mangaId) {
-            console.error("❌ ERROR CRÍTICO: No se pudo obtener el ID del manga.");
-            // Aun así intentamos cargar imágenes para que el usuario pueda leer
-        } else {
-            console.log("✅ ID ENCONTRADO:", state.mangaId, state.mangaTitle);
-        }
-
         // PASO 2: Cargar Servidor de Imágenes (At-Home)
+        // Usamos PROXY aquí porque es una llamada a la API (texto/json)
         const url = `${BASE_URL}/at-home/server/${state.chapterId}`;
         const res = await fetch(PROXY + encodeURIComponent(url));
         const json = await res.json();
@@ -53,9 +47,10 @@ async function initReader() {
         state.baseUrl = json.baseUrl;
         state.hash = json.chapter.hash;
         
+        // --- 🔥 CORRECCIÓN AQUÍ 🔥 ---
+        // NO USAMOS PROXY PARA LAS IMÁGENES. Vamos directo al servidor de MangaDex.
         state.pages = json.chapter.data.map(filename => {
-            const rawUrl = `${state.baseUrl}/data/${state.hash}/${filename}`;
-            return PROXY + encodeURIComponent(rawUrl);
+            return `${state.baseUrl}/data/${state.hash}/${filename}`;
         });
 
         // Actualizar UI
@@ -65,7 +60,7 @@ async function initReader() {
         const loader = document.getElementById('loader');
         if (loader) loader.style.display = 'none';
 
-        // PASO 3: Renderizar (Ahora ya es seguro observar el scroll)
+        // PASO 3: Renderizar
         render();
 
         // Ocultar UI después de 2 seg
@@ -81,7 +76,6 @@ async function initReader() {
 
 async function fetchMetadata() {
     try {
-        // Pedimos info del capítulo + relación manga
         const targetUrl = `${BASE_URL}/chapter/${state.chapterId}?includes[]=manga`;
         const res = await fetch(PROXY + encodeURIComponent(targetUrl));
         const json = await res.json();
@@ -89,20 +83,17 @@ async function fetchMetadata() {
         const attr = json.data.attributes;
         state.chapterNum = attr.chapter || "?";
         
-        // Extraer ID del Manga
         const mangaRel = json.data.relationships.find(r => r.type === 'manga');
         if (mangaRel) {
             state.mangaId = mangaRel.id;
         }
 
-        // Título del Capítulo en UI
         const chapTitleUi = document.getElementById('chapter-title');
         if (chapTitleUi) {
             const title = attr.title ? `: ${attr.title}` : '';
             chapTitleUi.innerText = `Cap. ${state.chapterNum}${title}`;
         }
 
-        // Intentar obtener título del manga (Opcional pero bonito)
         if (state.mangaId) {
             try {
                 const mangaRes = await fetch(PROXY + encodeURIComponent(`${BASE_URL}/manga/${state.mangaId}`));
@@ -122,7 +113,7 @@ async function fetchMetadata() {
     }
 }
 
-// --- RENDERIZADO (Sin cambios mayores, solo seguridad) ---
+// --- RENDERIZADO ---
 window.changeMode = function(newMode) {
     state.mode = newMode;
     const modal = document.getElementById('settings-modal');
@@ -147,7 +138,6 @@ function render() {
     canvas.innerHTML = '';
     canvas.className = state.mode === 'vertical' ? 'mode-vertical pb-20' : 'mode-horizontal bg-black';
     
-    // Gestión de controles horizontales
     const navLeft = document.getElementById('nav-left');
     const navCenter = document.getElementById('nav-center');
     const navRight = document.getElementById('nav-right');
@@ -165,7 +155,15 @@ function render() {
             img.src = url;
             img.className = 'page-img';
             img.loading = 'lazy';
-            img.setAttribute('referrerpolicy', 'no-referrer');
+            // IMPORTANTE: referrerPolicy ayuda a que MangaDex acepte la petición directa
+            img.setAttribute('referrerpolicy', 'no-referrer'); 
+            
+            // Manejador de errores por si una imagen específica falla
+            img.onerror = function() {
+                this.style.display = 'none'; // Ocultar o poner placeholder
+                console.error(`Error cargando imagen ${index + 1}`);
+            };
+
             img.dataset.index = index;
             img.onclick = window.toggleUI;
             canvas.appendChild(img);
@@ -276,10 +274,7 @@ function updateProgress(index) {
         progressBar.style.width = `${percent}%`;
     }
 
-    // AHORA SÍ: Guardado Seguro
     if (state.mangaId) {
         saveProgress(state.mangaId, state.mangaTitle, state.chapterId, state.chapterNum, index + 1);
-    } else {
-        console.warn("⏳ Aún esperando ID del manga... (Si esto sale mucho, fetchMetadata falló)");
     }
 }
