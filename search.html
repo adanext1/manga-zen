@@ -130,117 +130,115 @@
         </div>
     </main>
 
-    <div id="filter-overlay"
-        class="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
-        <div id="filter-panel"
-            class="w-full max-w-lg h-[90vh] bg-[#0f0f0f] rounded-t-3xl sm:rounded-3xl border border-white/10 flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 ease-out">
+    <div id="filter-overlay" onclick="toggleFilters()" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
-            <div class="w-full flex justify-center pt-3 pb-1 shrink-0" onclick="toggleFilters()">
-                <div class="h-1.5 w-12 rounded-full bg-white/20 cursor-pointer"></div>
-            </div>
+    <div id="filter-panel"
+        class="fixed bottom-0 inset-x-0 w-full max-w-lg mx-auto h-[90vh] bg-[#0f0f0f] rounded-t-3xl sm:rounded-3xl border border-white/10 flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 ease-out z-[60]">
 
-            <header class="flex items-center justify-between px-6 py-2 border-b border-white/5 shrink-0">
-                <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">tune</span> Filtros
-                </h2>
-                <button onclick="resetFilters()"
-                    class="text-xs font-bold text-gray-500 hover:text-white uppercase">Reset</button>
-            </header>
+        <div class="w-full flex justify-center pt-3 pb-1 shrink-0" onclick="toggleFilters()">
+            <div class="h-1.5 w-12 rounded-full bg-white/20 cursor-pointer"></div>
+        </div>
 
-            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        <header class="flex items-center justify-between px-6 py-2 border-b border-white/5 shrink-0">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">tune</span> Filtros
+            </h2>
+            <button onclick="resetFilters()"
+                class="text-xs font-bold text-gray-500 hover:text-white uppercase">Reset</button>
+        </header>
 
-                <section>
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Tiene capítulos en:</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="toggleFilterChip(this, 'langs', 'es')"
-                            class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español
-                            (España)</button>
-                        <button onclick="toggleFilterChip(this, 'langs', 'es-la')"
-                            class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español
-                            (Latino)</button>
-                        <button onclick="toggleFilterChip(this, 'langs', 'en')"
-                            class="filter-chip px-4 py-2 rounded-full bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">Inglés</button>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6 no-scrollbar">
+
+            <section>
+                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Tiene capítulos en:</h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleFilterChip(this, 'langs', 'es')"
+                        class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español
+                        (España)</button>
+                    <button onclick="toggleFilterChip(this, 'langs', 'es-la')"
+                        class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español
+                        (Latino)</button>
+                    <button onclick="toggleFilterChip(this, 'langs', 'en')"
+                        class="filter-chip px-4 py-2 rounded-full bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">Inglés</button>
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Tipo de Origen</h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleFilterChip(this, 'origLang', 'ja')"
+                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇯🇵
+                        Manga</button>
+                    <button onclick="toggleFilterChip(this, 'origLang', 'ko')"
+                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇰🇷
+                        Manhwa</button>
+                    <button onclick="toggleFilterChip(this, 'origLang', 'zh')"
+                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇨🇳
+                        Manhua</button>
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Ordenar Por</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setSort('followedCount')"
+                        class="filter-sort-btn active px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
+                        data-value="followedCount">Populares</button>
+                    <button onclick="setSort('relevance')"
+                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
+                        data-value="relevance">Relevancia</button>
+                    <button onclick="setSort('latestUploadedChapter')"
+                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
+                        data-value="latestUploadedChapter">Últimos</button>
+                    <button onclick="setSort('rating')"
+                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
+                        data-value="rating">Rating</button>
+                    <button onclick="setSort('createdAt')"
+                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
+                        data-value="createdAt">Recién Agregados</button>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Estado</h3>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="toggleFilterChip(this, 'status', 'ongoing')"
+                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-green-500 text-left">En
+                            Emisión</button>
+                        <button onclick="toggleFilterChip(this, 'status', 'completed')"
+                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-blue-500 text-left">Completado</button>
                     </div>
-                </section>
-
-                <section>
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Tipo de Origen</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="toggleFilterChip(this, 'origLang', 'ja')"
-                            class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇯🇵
-                            Manga</button>
-                        <button onclick="toggleFilterChip(this, 'origLang', 'ko')"
-                            class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇰🇷
-                            Manhwa</button>
-                        <button onclick="toggleFilterChip(this, 'origLang', 'zh')"
-                            class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇨🇳
-                            Manhua</button>
+                </div>
+                <div>
+                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Demografía</h3>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="toggleFilterChip(this, 'demographic', 'shounen')"
+                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shounen</button>
+                        <button onclick="toggleFilterChip(this, 'demographic', 'seinen')"
+                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Seinen</button>
+                        <button onclick="toggleFilterChip(this, 'demographic', 'shoujo')"
+                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shoujo</button>
+                        <button onclick="toggleFilterChip(this, 'demographic', 'josei')"
+                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Josei</button>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <section>
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Ordenar Por</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="setSort('followedCount')"
-                            class="filter-sort-btn active px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                            data-value="followedCount">Populares</button>
-                        <button onclick="setSort('relevance')"
-                            class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                            data-value="relevance">Relevancia</button>
-                        <button onclick="setSort('latestUploadedChapter')"
-                            class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                            data-value="latestUploadedChapter">Últimos</button>
-                        <button onclick="setSort('rating')"
-                            class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                            data-value="rating">Rating</button>
-                        <button onclick="setSort('createdAt')"
-                            class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                            data-value="createdAt">Recién Agregados</button>
-                    </div>
-                </section>
+            <section>
+                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Géneros</h3>
+                <div id="genres-container" class="flex flex-wrap gap-2">
+                </div>
+            </section>
 
-                <section class="grid grid-cols-2 gap-4">
-                    <div>
-                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Estado</h3>
-                        <div class="flex flex-col gap-2">
-                            <button onclick="toggleFilterChip(this, 'status', 'ongoing')"
-                                class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-green-500 text-left">En
-                                Emisión</button>
-                            <button onclick="toggleFilterChip(this, 'status', 'completed')"
-                                class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-blue-500 text-left">Completado</button>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Demografía</h3>
-                        <div class="flex flex-col gap-2">
-                            <button onclick="toggleFilterChip(this, 'demographic', 'shounen')"
-                                class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shounen</button>
-                            <button onclick="toggleFilterChip(this, 'demographic', 'seinen')"
-                                class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Seinen</button>
-                            <button onclick="toggleFilterChip(this, 'demographic', 'shoujo')"
-                                class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shoujo</button>
-                            <button onclick="toggleFilterChip(this, 'demographic', 'josei')"
-                                class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Josei</button>
-                        </div>
-                    </div>
-                </section>
+            <div class="h-8"></div> </div>
 
-                <section>
-                    <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Géneros</h3>
-                    <div id="genres-container" class="flex flex-wrap gap-2">
-                    </div>
-                </section>
-
-                <div class="h-24"></div>
-            </div>
-
-            <div
-                class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#0f0f0f] via-[#0f0f0f] to-transparent z-20">
-                <button onclick="applySearch()"
-                    class="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg shadow-[0_0_20px_rgba(140,37,244,0.3)] hover:scale-[1.02] transition-transform">
-                    Aplicar Filtros
-                </button>
-            </div>
+        <div class="shrink-0 p-6 border-t border-white/5 bg-[#0f0f0f] pb-8 md:pb-6">
+            <button onclick="applySearch()"
+                class="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg shadow-[0_0_20px_rgba(140,37,244,0.3)] hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
+                <span>Aplicar Filtros</span>
+                <span class="material-symbols-outlined">check</span>
+            </button>
         </div>
     </div>
 
@@ -258,7 +256,7 @@
             <span class="material-symbols-outlined text-[24px] fill-1 neon-glow">explore</span>
             <span class="text-[10px] font-medium">Explorar</span>
         </a>
-        <a href="#" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white">
+        <a href="profile.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white">
             <span class="material-symbols-outlined text-[24px]">person</span>
             <span class="text-[10px] font-medium">Perfil</span>
         </a>
@@ -266,5 +264,4 @@
 
     <script type="module" src="./js/search-logic.js"></script>
 </body>
-
 </html>
