@@ -21,17 +21,28 @@ let filterState = {
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Cargamos tags (si existe el contenedor)
     await loadTagsFromApi();
+    
+    // 2. Cargamos librería local
     loadLocalLibrary(); 
+    
+    // 3. Configuramos el buscador (SOLO si existe el input)
     setupSearchInput();
+    
+    // 4. Chequeamos URL
     checkUrlForTags();
-    performSearch(true); // Búsqueda inicial automática al cargar la página
+    
+    // 5. Búsqueda inicial automática (SOLO si existe la grilla de resultados)
+    if (document.getElementById('manga-grid')) {
+        performSearch(true); 
+    }
 });
 
 // --- CARGAR TAGS DESDE API ---
 async function loadTagsFromApi() {
     const container = document.getElementById('genres-container');
-    if(!container) return;
+    if(!container) return; // Evita error si no hay contenedor de tags
 
     try {
         const res = await fetch(PROXY + encodeURIComponent(`${BASE_URL}/manga/tag`));
@@ -114,10 +125,13 @@ async function loadLocalLibrary() {
     if (data) myLibraryCache = data;
 }
 
-// --- INPUT & SEARCH ---
+// --- INPUT & SEARCH (ARREGLADO AQUÍ) ---
 function setupSearchInput() {
     const input = document.getElementById('search-input');
     const dropdown = document.getElementById('search-dropdown');
+
+    // ARREGLO PRINCIPAL: Si no existe el input, detenemos la función aquí
+    if (!input) return;
 
     input.addEventListener('focus', () => {
         if (input.value.trim() === '') showSearchHistory();
@@ -130,11 +144,15 @@ function setupSearchInput() {
             input.blur();
         }
     });
-    document.addEventListener('click', (e) => {
-        if (dropdown && !input.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.add('hidden');
-        }
-    });
+    
+    // Solo agregamos el listener global si el dropdown existe
+    if (dropdown) {
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    }
 }
 
 function handleInput(val) {
@@ -154,6 +172,8 @@ function handleInput(val) {
 
 function renderDropdownResults(localItems, isLoadingApi) {
     const dropdown = document.getElementById('search-dropdown');
+    if (!dropdown) return; // Seguridad extra
+    
     dropdown.classList.remove('hidden');
     let html = '';
 
@@ -219,7 +239,8 @@ function showSearchHistory() {
 
 window.commitSearch = function(term) {
     const input = document.getElementById('search-input');
-    input.value = term;
+    if(input) input.value = term; // Check de seguridad
+
     let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
     history = history.filter(h => h !== term);
     history.unshift(term);
@@ -229,7 +250,14 @@ window.commitSearch = function(term) {
     filterState.query = term;
     filterState.tags = [];
     filterState.offset = 0;
-    performSearch(true);
+    
+    // Solo busca si existe la grilla
+    if(document.getElementById('manga-grid')) {
+        performSearch(true);
+    } else {
+        // Opcional: Redirigir al home con el query parameter si estás en details
+        // window.location.href = `index.html?search=${term}`;
+    }
     
     document.querySelectorAll('.filter-chip').forEach(b => {
         b.classList.remove('bg-primary/20', 'border-primary', 'text-white', 'active');
@@ -248,14 +276,14 @@ window.clearHistory = function() {
 
 window.goToManga = function(id) { window.location.href = `details.html?id=${id}`; };
 
-// --- 🔥 LOGICA DE FILTROS MANUALES (CAMBIOS AQUÍ) ---
+// --- LOGICA DE FILTROS ---
 
-// 1. SELECCIONAR CHIPS (Sin buscar)
 window.toggleFilterChip = function(btn, category, value) {
     const isActive = btn.classList.contains('active');
     
-    // Limpiar input de texto al tocar filtros para evitar conflictos
-    document.getElementById('search-input').value = '';
+    const input = document.getElementById('search-input');
+    if(input) input.value = '';
+
     filterState.query = ''; 
     
     if (isActive) {
@@ -267,12 +295,8 @@ window.toggleFilterChip = function(btn, category, value) {
         btn.classList.remove('bg-white/5', 'text-gray-300');
         filterState[category].push(value);
     }
-    
-    // 🔥 ELIMINADO: performSearch(true); 
-    // Ahora solo actualizamos visualmente. Esperamos al botón "Aplicar".
 };
 
-// 2. SELECCIONAR ORDEN (Sin buscar)
 window.setSort = function(value) {
     filterState.sort = value;
     document.querySelectorAll('.filter-sort-btn').forEach(btn => {
@@ -284,39 +308,38 @@ window.setSort = function(value) {
             btn.classList.add('bg-white/5', 'text-gray-300');
         }
     });
-    // 🔥 ELIMINADO: performSearch(true);
 };
 
-// 3. RESETEAR (Sin buscar o buscar default)
 window.resetFilters = function() {
     filterState = {
-        query: '', sort: 'followedCount', // Reset a popular
+        query: '', sort: 'followedCount',
         status: [], demographic: [], content: ['safe', 'suggestive'], 
         tags: [], langs: ['es', 'es-la'], origLang: [], offset: 0
     };
-    document.getElementById('search-input').value = '';
+    const input = document.getElementById('search-input');
+    if(input) input.value = '';
     
-    // Limpiar visual
     document.querySelectorAll('.filter-chip').forEach(btn => {
         btn.classList.remove('bg-primary/20', 'border-primary', 'text-white', 'active');
         btn.classList.add('bg-white/5', 'text-gray-300');
     });
     setSort('followedCount');
     
-    // Aquí SÍ buscamos para limpiar la pantalla de resultados viejos
-    performSearch(true);
+    if(document.getElementById('manga-grid')) performSearch(true);
 };
 
-// 4. 🔥 APLICAR FILTROS (EL BOTÓN GRANDE)
 window.applySearch = function() {
     filterState.offset = 0; 
-    toggleFilters(); // Cierra el modal
-    performSearch(true); // 🔥 ¡AHORA SÍ BUSCAMOS!
+    toggleFilters(); 
+    if(document.getElementById('manga-grid')) performSearch(true);
 };
 
 window.toggleFilters = function() {
     const overlay = document.getElementById('filter-overlay');
     const panel = document.getElementById('filter-panel');
+    // Chequeo por si el modal no existe en esta página
+    if(!overlay || !panel) return;
+
     const isClosed = overlay.classList.contains('opacity-0');
     if (isClosed) { overlay.classList.remove('opacity-0', 'pointer-events-none'); panel.classList.remove('translate-y-full'); } 
     else { overlay.classList.add('opacity-0', 'pointer-events-none'); panel.classList.add('translate-y-full'); }
@@ -347,6 +370,9 @@ window.toggleQuickSave = async (event, id, titleEncoded, coverUrl, btn) => {
 // --- API FETCH PRINCIPAL ---
 async function performSearch(isNewSearch = true) {
     const grid = document.getElementById('manga-grid');
+    // ARREGLO EXTRA: Si no hay grid (estamos en details.html por ejemplo), salimos.
+    if (!grid) return;
+
     const countLabel = document.getElementById('results-count');
     const loadMoreBtn = document.getElementById('load-more-container');
     const { data: { user } } = await supabase.auth.getUser();
@@ -375,14 +401,16 @@ async function performSearch(isNewSearch = true) {
         const json = await res.json();
         const mangas = json.data;
 
-        if (isNewSearch) {
+        if (isNewSearch && countLabel) {
             countLabel.innerText = `${json.total} Títulos`;
             grid.innerHTML = '';
+        } else if (isNewSearch) {
+             grid.innerHTML = ''; // Si countLabel no existe, al menos limpiamos el grid
         }
 
         if (!mangas || mangas.length === 0) {
             if(isNewSearch) grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">No se encontraron resultados.</p>';
-            loadMoreBtn.classList.add('hidden');
+            if(loadMoreBtn) loadMoreBtn.classList.add('hidden');
             return;
         }
 
@@ -426,7 +454,9 @@ async function performSearch(isNewSearch = true) {
             grid.innerHTML += card;
         });
 
-        if (filterState.offset + 20 < json.total) loadMoreBtn.classList.remove('hidden'); else loadMoreBtn.classList.add('hidden');
+        if(loadMoreBtn) {
+            if (filterState.offset + 20 < json.total) loadMoreBtn.classList.remove('hidden'); else loadMoreBtn.classList.add('hidden');
+        }
     } catch (error) {
         console.error(error);
         if(isNewSearch) grid.innerHTML = '<p class="col-span-full text-center text-red-400">Error.</p>';
