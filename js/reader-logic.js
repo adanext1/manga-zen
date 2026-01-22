@@ -95,6 +95,18 @@ async function fetchMetadata() {
             chapTitleUi.innerText = `Cap. ${state.chapterNum}${title}`;
         }
 
+        const exitBtn = document.getElementById('exit-btn');
+if (exitBtn) {
+    exitBtn.onclick = () => {
+        if (state.mangaId) {
+            window.location.href = `details.html?id=${state.mangaId}`;
+        } else {
+            // Fallback si no tenemos ID
+            window.location.href = 'dashboard.html';
+        }
+    };
+}
+
         if (state.mangaId) {
             try {
                 const mangaRes = await fetch(PROXY + encodeURIComponent(`${BASE_URL}/manga/${state.mangaId}`));
@@ -155,14 +167,25 @@ window.changeMode = function(newMode) {
     render();
 };
 
-window.toggleDualPage = function() {
-    state.dualPage = !state.dualPage;
-    const icon = document.querySelector('#dual-page-toggle span');
-    if (icon) {
-        icon.innerText = state.dualPage ? 'toggle_on' : 'toggle_off';
-        icon.classList.toggle('text-primary', state.dualPage);
+// En js/reader-logic.js
+
+window.toggleUI = function() {
+    const body = document.body;
+    body.classList.toggle('ui-hidden');
+
+    // CONTROL DEL HEADER
+    const header = document.getElementById('reader-header');
+    const controls = document.getElementById('horizontal-controls'); // Si existe
+
+    // Si 'ui-hidden' está activo, OCULTAMOS el header (lo movemos hacia arriba)
+    if (body.classList.contains('ui-hidden')) {
+        if(header) header.style.transform = 'translateY(-100%)';
+        if(controls) controls.style.transform = 'translateY(100%)'; // Controles abajo
+    } else {
+        // Si NO, lo mostramos
+        if(header) header.style.transform = 'translateY(0)';
+        if(controls) controls.style.transform = 'translateY(0)';
     }
-    if (state.mode === 'horizontal') render();
 };
 
 function render() {

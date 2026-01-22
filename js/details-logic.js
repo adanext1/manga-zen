@@ -22,6 +22,7 @@ async function initDetails() {
     await loadMangaMetadata(mangaId);
     await loadChapters(mangaId);
     checkIfFavorited(); 
+    
 }
 
 // --- LOGICA DE METADATOS ---
@@ -95,8 +96,12 @@ window.changeChapterLang = function(lang) {
     loadChapters(mangaId);
 };
 
+// En js/details-logic.js
+
 async function loadChapters(id) {
     const container = document.getElementById('chapters-container');
+    
+    // Spinner de carga
     container.innerHTML = `
         <div class="flex justify-center py-10">
             <span class="material-symbols-outlined animate-spin text-primary">sync</span>
@@ -114,36 +119,55 @@ async function loadChapters(id) {
         }
 
         url.searchParams.append('order[chapter]', 'desc');
-        url.searchParams.append('limit', 100);
+        url.searchParams.append('limit', 200); // Aumentamos el límite para tener de donde filtrar
 
         const res = await fetch(PROXY + encodeURIComponent(url.toString()));
         const json = await res.json();
-        const chapters = json.data;
+        const rawChapters = json.data;
 
         container.innerHTML = '';
 
         const langText = currentLang === 'es' ? 'en español' : 'en inglés';
 
-        if (chapters.length === 0) {
+        if (rawChapters.length === 0) {
             container.innerHTML = `<p class="text-gray-500 text-center py-4">No hay capítulos ${langText} :(</p>`;
             return;
         }
 
-        // Configurar botón "Leer" para el primer capítulo de la lista actual
-        const firstChapId = chapters[chapters.length - 1].id; 
+        // --- 🔥 FILTRO ANTI-REPETIDOS ---
+        const uniqueChapters = [];
+        const seenNumbers = new Set();
+
+        rawChapters.forEach(chap => {
+            const num = chap.attributes.chapter;
+            // Solo agregamos si NO hemos visto este número antes
+            if (!seenNumbers.has(num)) {
+                seenNumbers.add(num);
+                uniqueChapters.push(chap);
+            }
+        });
+        // ---------------------------------
+
+        // Configurar botón "Leer" (Último cap disponible)
+        // Ojo: uniqueChapters está ordenado DESC (10, 9, 8...), el primero es el último cap
+        // Si quieres que el botón "Leer" vaya al CAPÍTULO 1, toma el último del array
+        const firstChapId = uniqueChapters[uniqueChapters.length - 1].id; 
         const readBtn = document.getElementById('read-btn');
         if(readBtn) {
             readBtn.onclick = () => window.location.href = `reader.html?chapter=${firstChapId}`;
             readBtn.innerHTML = `<span class="material-symbols-outlined">book_2</span> Leer ${currentLang === 'es' ? '' : '(EN)'}`;
         }
 
-        chapters.forEach(chap => {
+        // Renderizar la lista limpia
+        uniqueChapters.forEach(chap => {
             const attr = chap.attributes;
-            const chapNum = attr.chapter || "Ex";
+            const chapNum = attr.chapter || "Ex"; // Ex = Extra/Oneshot
             const title = attr.title || "";
             const timeAgo = new Date(attr.publishAt).toLocaleDateString();
             
-            // Bandera según idioma
+            // Nombre del Scan (Grupo) - Opcional, pero útil para saber quién lo tradujo
+            // const scanGroup = chap.relationships.find(r => r.type === 'scanlation_group');
+            
             const flag = attr.translatedLanguage === 'en' ? '🇬🇧' : (attr.translatedLanguage === 'es' ? '🇪🇸' : '🇲🇽');
 
             const html = `
@@ -153,8 +177,8 @@ async function loadChapters(id) {
                         <div class="w-10 h-10 bg-white/5 rounded flex items-center justify-center text-primary font-bold group-hover:bg-primary group-hover:text-white transition">
                             ${chapNum}
                         </div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-200">Capítulo ${chapNum} ${title ? `: ${title}` : ''}</p>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold text-gray-200 truncate pr-4">Capítulo ${chapNum} ${title ? `: ${title}` : ''}</p>
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] text-gray-500">${timeAgo}</span>
                                 <span class="text-[10px] uppercase text-gray-400 bg-black/30 px-1.5 rounded flex items-center gap-1">
