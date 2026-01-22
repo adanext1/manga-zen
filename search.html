@@ -5,142 +5,26 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Buscador Avanzado</title>
+    
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: { "primary": "#8c25f4", "background-dark": "#0f0f0f", "surface-dark": "#1E1E1E" },
-                    fontFamily: { "display": ["Plus Jakarta Sans", "sans-serif"] },
-                },
-            },
-        }
-    </script>
-    <style>
-        /* --- PERSONALIZACIÓN DE SCROLLBAR (Webkit / Chrome / Móviles) --- */
-        
-        /* Ancho de la barra */
-        ::-webkit-scrollbar {
-            width: 6px;  /* Vertical */
-            height: 6px; /* Horizontal */
-        }
-
-        /* El "carril" o fondo de la barra */
-        ::-webkit-scrollbar-track {
-            background: #0f0f0f; /* Color de fondo de tu app */
-        }
-
-        /* La "manija" o parte que se mueve */
-        ::-webkit-scrollbar-thumb {
-            background: #333; /* Gris oscuro sutil */
-            border-radius: 10px; /* Redondita */
-        }
-
-        /* Al pasar el mouse por encima (Solo PC) */
-        ::-webkit-scrollbar-thumb:hover {
-            background: #8c25f4; /* Se pone morada (Primary) al interactuar */
-        }
-
-        /* Firefox (Soporte limitado pero útil) */
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: #333 #0f0f0f;
-        }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0f0f0f;
-        }
-
-        .glass {
-            background: rgba(20, 20, 20, 0.9);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .manga-card-gradient {
-            background: linear-gradient(0deg, rgba(15, 15, 15, 0.95) 0%, rgba(15, 15, 15, 0) 60%);
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .neon-glow:focus-within {
-            box-shadow: 0 0 15px rgba(140, 37, 244, 0.2);
-            border-color: rgba(140, 37, 244, 0.5);
-        }
-    </style>
+    
+    <script src="./js/theme-init.js"></script>
 </head>
 
 <body class="bg-background-dark text-white h-screen flex overflow-hidden">
 
-    <aside class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-40">
-        <div>
-            <div class="flex items-center gap-3 mb-10">
-                <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    <span class="material-symbols-outlined text-[24px]">auto_stories</span>
-                </div>
-                <h1 class="text-2xl font-bold tracking-tight">MangaZen</h1>
-            </div>
-            <nav class="space-y-2">
-                <a href="dashboard.html"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">home</span> Inicio
-                </a>
-                <a href="library.html"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">bookmarks</span> Biblioteca
-                </a>
-                <a href="history.html"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">history</span> Historial
-                </a>
-                <a href="#"
-                    class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-medium shadow-lg shadow-primary/20">
-                    <span class="material-symbols-outlined fill-1">explore</span> Explorar
-                </a>
-            </nav>
-        </div>
-    </aside>
+    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-40 h-screen sticky top-0">
+        </aside>
 
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
 
-        <header class="sticky top-0 z-30 w-full glass px-4 py-3 md:py-4 shadow-lg shadow-black/50">
-            <div class="flex items-center gap-3 max-w-4xl mx-auto">
-                <label
-                    class="group flex flex-1 cursor-text items-center justify-start gap-3 rounded-xl bg-white/5 px-3 py-3 ring-1 ring-white/10 transition-all duration-300 neon-glow hover:bg-white/10">
-                    <span
-                        class="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors">search</span>
-
-                    <input id="search-input"
-                        class="h-full w-full bg-transparent p-0 text-base font-medium text-white placeholder-gray-500 focus:outline-none focus:ring-0 border-none"
-                        placeholder="Buscar título, autor..." type="text" autocomplete="off" />
-
-                    <button id="clear-search" class="hidden text-gray-500 hover:text-white">
-                        <span class="material-symbols-outlined text-[18px]">close</span>
-                    </button>
-                </label>
-                <button onclick="toggleFilters()"
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 transition-colors hover:bg-white/10 hover:text-primary active:scale-95">
-                    <span class="material-symbols-outlined">tune</span>
-                </button>
-            </div>
-            <div id="search-dropdown"
-                class="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl hidden overflow-hidden z-10">
-            </div>
-            
-        </header>
+        <header id="header-container" class="sticky top-0 z-30 w-full glass px-4 py-3 md:py-4 shadow-lg shadow-black/50">
+            </header>
 
         <div id="results-area" class="flex-1 overflow-y-auto p-4 pb-24 md:pb-10 max-w-5xl mx-auto w-full">
             <div class="flex items-end justify-between mb-4">
                 <h3 class="text-xl font-bold tracking-tight text-white">Resultados</h3>
-                <span id="results-count" class="text-xs font-medium text-gray-500 uppercase tracking-widest">--
-                    Títulos</span>
+                <span id="results-count" class="text-xs font-medium text-gray-500 uppercase tracking-widest">-- Títulos</span>
             </div>
 
             <div id="manga-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -182,11 +66,9 @@
                 <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Tiene capítulos en:</h3>
                 <div class="flex flex-wrap gap-2">
                     <button onclick="toggleFilterChip(this, 'langs', 'es')"
-                        class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español
-                        (España)</button>
+                        class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español (España)</button>
                     <button onclick="toggleFilterChip(this, 'langs', 'es-la')"
-                        class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español
-                        (Latino)</button>
+                        class="filter-chip active px-4 py-2 rounded-full bg-primary/20 border border-primary text-sm text-white">Español (Latino)</button>
                     <button onclick="toggleFilterChip(this, 'langs', 'en')"
                         class="filter-chip px-4 py-2 rounded-full bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">Inglés</button>
                 </div>
@@ -196,35 +78,22 @@
                 <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Tipo de Origen</h3>
                 <div class="flex flex-wrap gap-2">
                     <button onclick="toggleFilterChip(this, 'origLang', 'ja')"
-                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇯🇵
-                        Manga</button>
+                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇯🇵 Manga</button>
                     <button onclick="toggleFilterChip(this, 'origLang', 'ko')"
-                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇰🇷
-                        Manhwa</button>
+                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇰🇷 Manhwa</button>
                     <button onclick="toggleFilterChip(this, 'origLang', 'zh')"
-                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇨🇳
-                        Manhua</button>
+                        class="filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10">🇨🇳 Manhua</button>
                 </div>
             </section>
 
             <section>
                 <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Ordenar Por</h3>
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="setSort('followedCount')"
-                        class="filter-sort-btn active px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                        data-value="followedCount">Populares</button>
-                    <button onclick="setSort('relevance')"
-                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                        data-value="relevance">Relevancia</button>
-                    <button onclick="setSort('latestUploadedChapter')"
-                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                        data-value="latestUploadedChapter">Últimos</button>
-                    <button onclick="setSort('rating')"
-                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                        data-value="rating">Rating</button>
-                    <button onclick="setSort('createdAt')"
-                        class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300"
-                        data-value="createdAt">Recién Agregados</button>
+                    <button onclick="setSort('followedCount')" class="filter-sort-btn active px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300" data-value="followedCount">Populares</button>
+                    <button onclick="setSort('relevance')" class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300" data-value="relevance">Relevancia</button>
+                    <button onclick="setSort('latestUploadedChapter')" class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300" data-value="latestUploadedChapter">Últimos</button>
+                    <button onclick="setSort('rating')" class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300" data-value="rating">Rating</button>
+                    <button onclick="setSort('createdAt')" class="filter-sort-btn px-3 py-2 rounded bg-white/5 border border-white/5 text-sm text-gray-300" data-value="createdAt">Recién Agregados</button>
                 </div>
             </section>
 
@@ -232,24 +101,17 @@
                 <div>
                     <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Estado</h3>
                     <div class="flex flex-col gap-2">
-                        <button onclick="toggleFilterChip(this, 'status', 'ongoing')"
-                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-green-500 text-left">En
-                            Emisión</button>
-                        <button onclick="toggleFilterChip(this, 'status', 'completed')"
-                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-blue-500 text-left">Completado</button>
+                        <button onclick="toggleFilterChip(this, 'status', 'ongoing')" class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-green-500 text-left">En Emisión</button>
+                        <button onclick="toggleFilterChip(this, 'status', 'completed')" class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 border-l-2 border-blue-500 text-left">Completado</button>
                     </div>
                 </div>
                 <div>
                     <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Demografía</h3>
                     <div class="flex flex-col gap-2">
-                        <button onclick="toggleFilterChip(this, 'demographic', 'shounen')"
-                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shounen</button>
-                        <button onclick="toggleFilterChip(this, 'demographic', 'seinen')"
-                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Seinen</button>
-                        <button onclick="toggleFilterChip(this, 'demographic', 'shoujo')"
-                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shoujo</button>
-                        <button onclick="toggleFilterChip(this, 'demographic', 'josei')"
-                            class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Josei</button>
+                        <button onclick="toggleFilterChip(this, 'demographic', 'shounen')" class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shounen</button>
+                        <button onclick="toggleFilterChip(this, 'demographic', 'seinen')" class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Seinen</button>
+                        <button onclick="toggleFilterChip(this, 'demographic', 'shoujo')" class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Shoujo</button>
+                        <button onclick="toggleFilterChip(this, 'demographic', 'josei')" class="filter-chip px-3 py-2 rounded bg-white/5 text-sm text-gray-300 text-left">Josei</button>
                     </div>
                 </div>
             </section>
@@ -257,10 +119,11 @@
             <section>
                 <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Géneros</h3>
                 <div id="genres-container" class="flex flex-wrap gap-2">
-                </div>
+                    </div>
             </section>
 
-            <div class="h-8"></div> </div>
+            <div class="h-8"></div>
+        </div>
 
         <div class="shrink-0 p-6 border-t border-white/5 bg-[#0f0f0f] pb-8 md:pb-6">
             <button onclick="applySearch()"
@@ -271,26 +134,13 @@
         </div>
     </div>
 
-    <nav
-        class="md:hidden fixed bottom-0 inset-x-0 glass border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50">
-        <a href="dashboard.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white">
-            <span class="material-symbols-outlined text-[24px]">home</span>
-            <span class="text-[10px] font-medium">Inicio</span>
-        </a>
-        <a href="library.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white">
-            <span class="material-symbols-outlined text-[24px]">bookmarks</span>
-            <span class="text-[10px] font-medium">Biblio</span>
-        </a>
-        <a href="#" class="flex flex-col items-center gap-1 text-primary">
-            <span class="material-symbols-outlined text-[24px] fill-1 neon-glow">explore</span>
-            <span class="text-[10px] font-medium">Explorar</span>
-        </a>
-        <a href="profile.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white">
-            <span class="material-symbols-outlined text-[24px]">person</span>
-            <span class="text-[10px] font-medium">Perfil</span>
-        </a>
-    </nav>
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 glass border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 pb-safe">
+        </nav>
 
+    <script src="./js/nav-loader.js"></script> 
+    <script type="module" src="./js/user-loader.js"></script> 
+    
     <script type="module" src="./js/search-logic.js"></script>
+    
 </body>
 </html>

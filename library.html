@@ -6,74 +6,18 @@
     <title>Mi Biblioteca</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: { "primary": "#8c25f4", "background-dark": "#0f0f0f", "surface-dark": "#1E1E1E" },
-                    fontFamily: { "display": ["Plus Jakarta Sans", "sans-serif"] },
-                },
-            },
-        }
-    </script>
+    <script src="./js/theme-init.js"></script>
+
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f0f0f; }
         .glass-header { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .manga-card-gradient { background: linear-gradient(0deg, rgba(15, 15, 15, 0.95) 0%, rgba(15, 15, 15, 0) 60%); }
-        .custom-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* Ocultar scrollbar general pero permitir scroll */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 
 <body class="bg-background-dark text-white h-screen flex overflow-hidden selection:bg-primary selection:text-white">
 
-    <aside class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-50">
-        <div>
-            <div class="flex items-center gap-3 mb-10">
-                <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(140,37,244,0.3)]">
-                    <span class="material-symbols-outlined text-[24px]">auto_stories</span>
-                </div>
-                <h1 class="text-2xl font-bold tracking-tight">MangaZen</h1>
-            </div>
-            
-            <nav class="space-y-2">
-                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">home</span> Inicio
-                </a>
-                
-                <a href="#" class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-medium shadow-lg shadow-primary/20">
-                    <span class="material-symbols-outlined fill-1">bookmarks</span> Biblioteca
-                </a>
-                
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">history</span> Historial
-                </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">explore</span> Explorar
-                </a>
-            </nav>
-        </div>
-        
-        <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-            <div class="size-10 rounded-full bg-surface-dark flex items-center justify-center text-primary">
-                <span class="material-symbols-outlined">person</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold truncate">Mi Cuenta</p>
-                <p class="text-xs text-gray-400">Gratis</p>
-            </div>
-            <button id="logoutBtnDesktop" class="text-red-400 hover:bg-white/10 p-1.5 rounded-lg transition" title="Salir">
-                <span class="material-symbols-outlined text-[20px]">logout</span>
-            </button>
-        </div>
-    </aside>
+    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-40 h-screen sticky top-0">
+        </aside>
 
     <div class="flex-1 flex flex-col h-full relative overflow-hidden">
         
@@ -86,24 +30,18 @@
                     <h1 class="text-lg font-bold tracking-tight">Mi Colección</h1>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition">
+                    <button onclick="window.location.href='search.html'" class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition">
                         <span class="material-symbols-outlined">search</span>
                     </button>
                 </div>
             </div>
             
             <div class="px-4 pb-0">
-                <div class="flex gap-6 overflow-x-auto custom-scrollbar border-b border-zinc-800/50">
+                <div class="flex gap-6 overflow-x-auto no-scrollbar border-b border-zinc-800/50">
                     <button class="flex flex-col items-center border-b-2 border-primary pb-3 transition-colors">
-                        <span class="text-white text-sm font-bold whitespace-nowrap">Leyendo</span>
+                        <span class="text-white text-sm font-bold whitespace-nowrap">Todos</span>
                     </button>
-                    <button class="flex flex-col items-center border-b-2 border-transparent pb-3 transition-colors group">
-                        <span class="text-zinc-500 text-sm font-bold whitespace-nowrap group-hover:text-zinc-300">Planeado</span>
-                    </button>
-                    <button class="flex flex-col items-center border-b-2 border-transparent pb-3 transition-colors group">
-                        <span class="text-zinc-500 text-sm font-bold whitespace-nowrap group-hover:text-zinc-300">Completado</span>
-                    </button>
-                </div>
+                    </div>
             </div>
         </header>
 
@@ -127,40 +65,17 @@
                 </div>
                 <h3 class="font-bold text-gray-400">Tu biblioteca está vacía</h3>
                 <p class="text-sm text-gray-600 mt-1">Guarda mangas para verlos aquí.</p>
-                <a href="dashboard.html" class="mt-4 px-4 py-2 bg-primary/20 text-primary rounded-lg text-sm font-bold hover:bg-primary/30 transition">Explorar</a>
+                <a href="search.html" class="mt-4 px-4 py-2 bg-primary/20 text-primary rounded-lg text-sm font-bold hover:bg-primary/30 transition">Explorar</a>
             </div>
         </main>
 
-    </div> <nav class="md:hidden fixed bottom-0 inset-x-0 glass-header border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 bg-[#0f0f0f]/95">
-        <button onclick="window.location.href='dashboard.html'" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white">
-            <span class="material-symbols-outlined text-[24px]">home</span>
-            <span class="text-[10px] font-medium">Inicio</span>
-        </button>
-        
-        <button class="flex flex-col items-center gap-1 text-primary">
-            <span class="material-symbols-outlined text-[24px] fill-1">bookmarks</span>
-            <span class="text-[10px] font-medium">Biblio</span>
-        </button>
-        
-        <button onclick="window.location.href='dashboard.html'" class="flex items-center justify-center -mt-12 size-14 bg-surface-dark border border-white/10 text-white rounded-full shadow-lg active:scale-95 transition-transform">
-            <span class="material-symbols-outlined text-3xl">search</span>
-        </button>
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 glass-header border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 pb-safe">
+        </nav>
 
-        <button class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white">
-            <span class="material-symbols-outlined text-[24px]">history</span>
-            <span class="text-[10px] font-medium">History</span>
-        </button>
-        <button id="logoutBtnMobile" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-red-400">
-            <span class="material-symbols-outlined text-[24px]">logout</span>
-            <span class="text-[10px] font-medium">Salir</span>
-        </button>
-    </nav>
-
+    <script src="./js/nav-loader.js"></script> 
+    <script type="module" src="./js/user-loader.js"></script> 
+    
     <script type="module" src="./js/library-logic.js"></script>
-    <script type="module">
-        import { logoutUser } from './js/auth.js';
-        document.getElementById('logoutBtnDesktop')?.addEventListener('click', logoutUser);
-        document.getElementById('logoutBtnMobile')?.addEventListener('click', logoutUser);
-    </script>
+
 </body>
 </html>

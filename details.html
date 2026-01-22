@@ -6,62 +6,14 @@
     <title>Detalles del Manga</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#8c25f4",
-                        "background-dark": "#0f0f0f",
-                        "surface-dark": "#1E1E1E",
-                    },
-                    fontFamily: { "display": ["Plus Jakarta Sans", "sans-serif"] }
-                }
-            }
-        }
-    </script>
-    <style>
-        /* Estilos Base */
-        body { background-color: #0f0f0f; color: white; }
-        .glass { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .glass-card { background: rgba(30, 30, 30, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-    </style>
+    <script src="./js/theme-init.js"></script>
 </head>
 
-<body class="bg-background-dark font-display text-white selection:bg-primary selection:text-white h-screen flex overflow-hidden">
+<body class="bg-background-dark text-white selection:bg-primary selection:text-white h-screen flex overflow-hidden">
 
-    <aside class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-50">
-        <div>
-            <div class="flex items-center gap-3 mb-10">
-                <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    <span class="material-symbols-outlined text-[24px]">auto_stories</span>
-                </div>
-                <h1 class="text-2xl font-bold tracking-tight">MangaZen</h1>
-            </div>
-            <nav class="space-y-2">
-                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">home</span> Inicio
-                </a>
-                <a href="library.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">bookmarks</span> Biblioteca
-                </a>
-                <a href="search.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">explore</span> Explorar
-                </a>
-                <a href="history.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">history</span> Historial
-                </a>
-                <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition">
-                    <span class="material-symbols-outlined">person</span> Perfil
-                </a>
-            </nav>
-        </div>
-    </aside>
+    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-40 h-screen sticky top-0">
+        </aside>
 
     <div class="flex-1 flex flex-col h-full relative overflow-y-auto no-scrollbar">
         
@@ -184,28 +136,8 @@
         </main>
     </div>
 
-    <nav class="md:hidden fixed bottom-0 inset-x-0 bg-[#0f0f0f]/95 border-t border-zinc-800 py-3 px-6 flex justify-between items-center z-50 backdrop-blur-xl pb-safe">
-        <a href="dashboard.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white transition-colors group">
-            <span class="material-symbols-outlined text-[24px] group-active:scale-95 transition-transform">home</span>
-            <span class="text-[10px] font-medium">Inicio</span>
-        </a>
-        <a href="library.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white transition-colors group">
-            <span class="material-symbols-outlined text-[24px] group-active:scale-95 transition-transform">bookmarks</span>
-            <span class="text-[10px] font-medium">Biblio</span>
-        </a>
-        <a href="search.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white transition-colors group">
-            <span class="material-symbols-outlined text-[24px] group-active:scale-95 transition-transform">explore</span>
-            <span class="text-[10px] font-medium">Explorar</span>
-        </a>
-        <a href="history.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white transition-colors group">
-            <span class="material-symbols-outlined text-[24px] group-active:scale-95 transition-transform">history</span>
-            <span class="text-[10px] font-medium">Historial</span>
-        </a>
-        <a href="profile.html" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white transition-colors group">
-            <span class="material-symbols-outlined text-[24px] group-active:scale-95 transition-transform">person</span>
-            <span class="text-[10px] font-medium">Perfil</span>
-        </a>
-    </nav>
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 glass border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 pb-safe">
+        </nav>
 
     <script type="module" src="./js/details-logic.js"></script>
     <script>
@@ -213,15 +145,21 @@
         const desc = document.getElementById('manga-desc');
         const toggle = document.getElementById('toggle-desc');
         
-        toggle.addEventListener('click', () => {
-            if (desc.classList.contains('line-clamp-4')) {
-                desc.classList.remove('line-clamp-4');
-                toggle.textContent = "Leer menos";
-            } else {
-                desc.classList.add('line-clamp-4');
-                toggle.textContent = "Leer más";
-            }
-        });
+        if(desc && toggle){
+            toggle.addEventListener('click', () => {
+                if (desc.classList.contains('line-clamp-4')) {
+                    desc.classList.remove('line-clamp-4');
+                    toggle.textContent = "Leer menos";
+                } else {
+                    desc.classList.add('line-clamp-4');
+                    toggle.textContent = "Leer más";
+                }
+            });
+        }
     </script>
+
+    <script src="./js/nav-loader.js"></script> 
+    <script type="module" src="./js/user-loader.js"></script> 
+
 </body>
 </html>
