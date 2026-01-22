@@ -22,6 +22,35 @@
         }
     </script>
     <style>
+        /* --- PERSONALIZACIÓN DE SCROLLBAR (Webkit / Chrome / Móviles) --- */
+        
+        /* Ancho de la barra */
+        ::-webkit-scrollbar {
+            width: 6px;  /* Vertical */
+            height: 6px; /* Horizontal */
+        }
+
+        /* El "carril" o fondo de la barra */
+        ::-webkit-scrollbar-track {
+            background: #0f0f0f; /* Color de fondo de tu app */
+        }
+
+        /* La "manija" o parte que se mueve */
+        ::-webkit-scrollbar-thumb {
+            background: #333; /* Gris oscuro sutil */
+            border-radius: 10px; /* Redondita */
+        }
+
+        /* Al pasar el mouse por encima (Solo PC) */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8c25f4; /* Se pone morada (Primary) al interactuar */
+        }
+
+        /* Firefox (Soporte limitado pero útil) */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #333 #0f0f0f;
+        }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #0f0f0f;
