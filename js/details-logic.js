@@ -144,7 +144,7 @@ async function loadChapters(id) {
         }
 
         url.searchParams.append('order[chapter]', 'desc');
-        url.searchParams.append('limit', 200); // Aumentamos el límite para tener de donde filtrar
+        url.searchParams.append('limit', 200); 
 
         const res = await fetch(PROXY + encodeURIComponent(url.toString()));
         const json = await res.json();
@@ -159,23 +159,19 @@ async function loadChapters(id) {
             return;
         }
 
-        // --- 🔥 FILTRO ANTI-REPETIDOS ---
+        // --- FILTRO ANTI-REPETIDOS ---
         const uniqueChapters = [];
         const seenNumbers = new Set();
 
         rawChapters.forEach(chap => {
             const num = chap.attributes.chapter;
-            // Solo agregamos si NO hemos visto este número antes
             if (!seenNumbers.has(num)) {
                 seenNumbers.add(num);
                 uniqueChapters.push(chap);
             }
         });
-        // ---------------------------------
 
-        // Configurar botón "Leer" (Último cap disponible)
-        // Ojo: uniqueChapters está ordenado DESC (10, 9, 8...), el primero es el último cap
-        // Si quieres que el botón "Leer" vaya al CAPÍTULO 1, toma el último del array
+        // Configurar botón "Leer"
         const firstChapId = uniqueChapters[uniqueChapters.length - 1].id; 
         const readBtn = document.getElementById('read-btn');
         if(readBtn) {
@@ -183,36 +179,42 @@ async function loadChapters(id) {
             readBtn.innerHTML = `<span class="material-symbols-outlined">book_2</span> Leer ${currentLang === 'es' ? '' : '(EN)'}`;
         }
 
-        // Renderizar la lista limpia
+        // Renderizar la lista
         uniqueChapters.forEach(chap => {
             const attr = chap.attributes;
-            const chapNum = attr.chapter || "Ex"; // Ex = Extra/Oneshot
+            const chapNum = attr.chapter || "Ex";
             const title = attr.title || "";
             const timeAgo = new Date(attr.publishAt).toLocaleDateString();
             
-            // Nombre del Scan (Grupo) - Opcional, pero útil para saber quién lo tradujo
-            // const scanGroup = chap.relationships.find(r => r.type === 'scanlation_group');
-            
             const flag = attr.translatedLanguage === 'en' ? '🇬🇧' : (attr.translatedLanguage === 'es' ? '🇪🇸' : '🇲🇽');
 
+            // --- 🔥 AQUÍ ESTÁ EL ARREGLO DEL TEXTO 🔥 ---
             const html = `
                 <div onclick="window.location.href='reader.html?chapter=${chap.id}'" 
                      class="flex items-center justify-between p-4 bg-surface-dark rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition group active:scale-[0.99]">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-white/5 rounded flex items-center justify-center text-primary font-bold group-hover:bg-primary group-hover:text-white transition">
+                    
+                    <div class="flex items-center gap-4 w-full overflow-hidden">
+                        
+                        <div class="w-10 h-10 shrink-0 bg-white/5 rounded flex items-center justify-center text-primary font-bold group-hover:bg-primary group-hover:text-white transition">
                             ${chapNum}
                         </div>
-                        <div class="overflow-hidden">
-                            <p class="text-sm font-bold text-gray-200 truncate pr-4">Capítulo ${chapNum} ${title ? `: ${title}` : ''}</p>
+
+                        <div class="min-w-0 flex-1">
+                            
+                            <p class="text-sm font-bold text-gray-200 truncate">
+                                Capítulo ${chapNum} ${title ? `: ${title}` : ''}
+                            </p>
+
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-gray-500">${timeAgo}</span>
-                                <span class="text-[10px] uppercase text-gray-400 bg-black/30 px-1.5 rounded flex items-center gap-1">
+                                <span class="text-[10px] text-gray-500 whitespace-nowrap">${timeAgo}</span>
+                                <span class="text-[10px] uppercase text-gray-400 bg-black/30 px-1.5 rounded flex items-center gap-1 whitespace-nowrap">
                                     ${flag} ${attr.translatedLanguage}
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <span class="material-symbols-outlined text-gray-600 group-hover:text-white">play_arrow</span>
+
+                    <span class="material-symbols-outlined text-gray-600 group-hover:text-white shrink-0 ml-2">play_arrow</span>
                 </div>
             `;
             container.innerHTML += html;
