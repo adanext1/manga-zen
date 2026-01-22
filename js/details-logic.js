@@ -26,6 +26,8 @@ async function initDetails() {
 }
 
 // --- LOGICA DE METADATOS ---
+// En js/details-logic.js
+
 async function loadMangaMetadata(id) {
     try {
         const url = `${BASE_URL}/manga/${id}?includes[]=author&includes[]=artist&includes[]=cover_art`;
@@ -49,9 +51,7 @@ async function loadMangaMetadata(id) {
         const status = attr.status;
         const statusEl = document.getElementById('manga-status');
         statusEl.innerText = status === 'ongoing' ? 'En Emisión' : 'Finalizado';
-        statusEl.className = status === 'ongoing' 
-            ? "bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase border border-green-500/30"
-            : "bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase border border-blue-500/30";
+        // (El resto de la lógica del status se queda igual...)
 
         // Autor
         const authorObj = data.relationships.find(r => r.type === 'author');
@@ -65,6 +65,31 @@ async function loadMangaMetadata(id) {
             const finalUrl = PROXY + encodeURIComponent(rawUrl);
             document.getElementById('manga-cover').src = finalUrl;
             document.getElementById('manga-bg').style.backgroundImage = `url('${finalUrl}')`;
+        }
+
+        // --- 🔥 NUEVO: GÉNEROS (TAGS) 🔥 ---
+        // --- GÉNEROS (TAGS) CLICKEABLES ---
+        const genresContainer = document.getElementById('manga-genres');
+        if (genresContainer && attr.tags.length > 0) {
+            genresContainer.innerHTML = ''; 
+            
+            attr.tags.forEach(tag => {
+                const tagName = tag.attributes.name.en;
+                const tagId = tag.id; // 🔥 IMPORTANTE: Obtenemos el ID del tag
+                const translatedTag = translateGenre(tagName);
+
+                const btn = document.createElement('button');
+                // Agregamos cursor-pointer y hover para que se vea clickeable
+                btn.className = "whitespace-nowrap px-2.5 py-1 rounded-md text-[10px] font-bold bg-white/10 text-gray-300 border border-white/5 hover:bg-primary hover:text-white hover:border-primary transition-colors cursor-pointer";
+                btn.innerText = translatedTag;
+                
+                // 🔥 AL HACER CLIC: Redirigir a search con el ID
+                btn.onclick = () => {
+                    window.location.href = `search.html?tag=${tagId}`;
+                };
+
+                genresContainer.appendChild(btn);
+            });
         }
 
     } catch (error) {
@@ -237,6 +262,24 @@ document.addEventListener("DOMContentLoaded", () => {
 function getSafeDescription(descObj) {
     if (!descObj) return "Sin descripción disponible.";
     return descObj['es-la'] || descObj['es'] || descObj['en'] || Object.values(descObj)[0] || "Sin descripción disponible.";
+}
+
+// --- Helper para traducir géneros (Ponlo al final del archivo) ---
+function translateGenre(englishName) {
+    const map = {
+        'Action': 'Acción', 'Adventure': 'Aventura', 'Comedy': 'Comedia',
+        'Drama': 'Drama', 'Fantasy': 'Fantasía', 'Horror': 'Terror',
+        'Mystery': 'Misterio', 'Romance': 'Romance', 'Sci-Fi': 'Ciencia Ficción',
+        'Slice of Life': 'Recuentos de la vida', 'Sports': 'Deportes',
+        'Psychological': 'Psicológico', 'Tragedy': 'Tragedia', 'Isekai': 'Isekai',
+        'School Life': 'Escolar', 'Magic': 'Magia', 'Supernatural': 'Sobrenatural',
+        'Military': 'Militar', 'Vampires': 'Vampiros', 'Zombies': 'Zombies',
+        'Boys\' Love': 'BL', 'Girls\' Love': 'GL', 'Web Comic': 'Webcomic',
+        'Full Color': 'A Color', 'Long Strip': 'Formato Webtoon', 'Reincarnation': 'Reencarnación',
+        'Time Travel': 'Viaje en el tiempo', 'Video Games': 'Videojuegos', 'Monsters': 'Monstruos',
+        'Villainess': 'Villana', 'Historical': 'Histórico', 'Martial Arts': 'Artes Marciales'
+    };
+    return map[englishName] || englishName; // Si no está en la lista, devuelve el original
 }
 
 initDetails();
