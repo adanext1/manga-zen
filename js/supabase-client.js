@@ -1,7 +1,7 @@
 // js/supabase-client.js
 
 // Importamos la librería desde el CDN (Internet)
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ⚠️ REEMPLAZA ESTO CON TUS DATOS DE SUPABASE
 const SUPABASE_URL = 'https://fwqspkqfzgbhylukczqc.supabase.co'; 
