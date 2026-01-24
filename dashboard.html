@@ -4,124 +4,116 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>MangaZen Dashboard</title>
+    <title>AdaNext Dashboard</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
     <script src="./js/theme-init.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: '#ff6740', background: '#0f0f0f', surface: '#18181b' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Clase para cuando arrastras un elemento */
+        .sortable-ghost { opacity: 0.4; background: #ff674020; }
+        .sortable-drag { cursor: grabbing; }
+    </style>
 </head>
 
-<body class="bg-background-dark text-white h-screen flex overflow-hidden selection:bg-primary selection:text-white">
+<body class="bg-background text-white h-screen flex overflow-hidden selection:bg-primary selection:text-white font-sans">
 
-    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-40 h-screen sticky top-0">
-        </aside>
+    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 shrink-0 z-40 h-screen sticky top-0"></aside>
 
     <main class="flex-1 relative flex flex-col h-full overflow-hidden">
 
-        <header class="w-full glass-panel z-40 px-5 py-4 flex items-center justify-between shrink-0 border-b border-white/5 bg-[#0f0f0f]/80 backdrop-blur-xl">
+        <header class="w-full glass-panel z-30 px-5 py-4 flex items-center justify-between shrink-0 border-b border-white/5 bg-[#0f0f0f]/80 backdrop-blur-xl">
             <div class="flex items-center gap-3">
                 <div class="md:hidden relative" onclick="window.location.href='profile.html'">
                     <div id="header-avatar-mobile" class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold border border-white/10">
                         <span class="material-symbols-outlined">person</span>
                     </div>
                 </div>
-
                 <div class="flex flex-col">
-                    <span class="text-xs text-gray-400 font-medium">Bienvenido de nuevo</span>
+                    <span class="text-xs text-gray-400 font-medium">Bienvenido</span>
                     <h2 class="text-white text-base md:text-xl font-bold leading-tight">
-                        <span id="header-username-display">Lector</span> </h2>
+                        <span id="header-username-display">Usuario</span>
+                    </h2>
                 </div>
             </div>
 
             <div class="flex gap-3">
-                <button onclick="window.location.href='search.html'"
-                    class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                <button onclick="togglePreferences()" class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors border border-white/5 text-gray-400 hover:text-white relative group">
+                    <span class="material-symbols-outlined">tune</span>
+                </button>
+
+                <button onclick="window.location.href='search.html'" class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
                     <span class="material-symbols-outlined text-white">search</span>
                 </button>
-                <button
-                    class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors relative">
-                    <span class="material-symbols-outlined text-white">notifications</span>
-                    <span class="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
-                </button>
+                
+                <div id="header-actions-container"></div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto no-scrollbar pb-24 md:pb-10 p-4 md:p-8 space-y-8">
-
-            <section>
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold tracking-tight">Continuar Leyendo</h2>
-                </div>
-                <div id="continue-reading-container">
-                    <div class="p-6 text-center text-gray-500 bg-white/5 rounded-2xl border border-white/5">
-                        <p>No tienes lecturas recientes.</p>
-                        <a href="search.html" class="text-primary text-sm font-bold mt-2 inline-block hover:underline">Explorar Mangas</a>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-green-400">new_releases</span>
-                        Recién Actualizados
-                    </h2>
-                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Español</span>
-                </div>
-                <div id="latest-updates-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar snap-x">
-                    <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                    <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                    <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                </div>
-            </section>
-
-            <section>
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-blue-400">fiber_new</span>
-                        Nuevos en el Catálogo
-                    </h2>
-                </div>
-                <div id="new-mangas-container" class="flex gap-4 overflow-x-auto pb-4 w-full no-scrollbar snap-x">
-                    <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                    <div class="snap-start shrink-0 w-32 md:w-40 aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                </div>
-            </section>
-
-            <section>
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold tracking-tight flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">trending_up</span>
-                        Tendencias en MangaDex
-                    </h2>
-                </div>
-                <div id="manga-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                    <div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>
-                </div>
-            </section>
-
+        <div id="dynamic-dashboard" class="flex-1 overflow-y-auto no-scrollbar pb-24 md:pb-10 p-4 md:p-8 space-y-10 scroll-smooth">
+            <div class="flex flex-col items-center justify-center h-64 text-gray-500 animate-pulse">
+                <span class="material-symbols-outlined text-4xl mb-2">dashboard_customize</span>
+                <p>Cargando tu dashboard personalizado...</p>
+            </div>
         </div>
+
     </main>
+    
 
-    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 glass-panel border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 pb-safe">
-        </nav>
+    <div id="pref-overlay" onclick="togglePreferences()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden transition-opacity"></div>
+    <div id="pref-panel" class="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-[#120b18] border-l border-white/10 z-[60] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        
+        <div class="p-5 border-b border-white/10 flex justify-between items-center bg-surface">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">tune</span> Personalizar Inicio
+            </h3>
+            <button onclick="togglePreferences()" class="p-1 hover:bg-white/10 rounded-full"><span class="material-symbols-outlined">close</span></button>
+        </div>
 
-    <script src="./js/nav-loader.js"></script> <script type="module" src="./js/user-loader.js"></script> <script type="module" src="./js/home-logic.js"></script>
+        <div class="flex-1 overflow-y-auto p-5">
+            <p class="text-xs text-gray-400 mb-4">Arrastra para reordenar o desmarca para ocultar secciones.</p>
+            
+            <ul id="sortable-modules" class="space-y-2">
+                </ul>
+        </div>
+
+        <div class="p-5 border-t border-white/10 bg-surface">
+            <button onclick="savePreferences()" class="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined">save</span> Guardar Cambios
+            </button>
+        </div>
+    </div>
+
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 glass-panel border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 pb-safe"></nav>
+
+    <script src="./js/nav-loader.js"></script> 
+    <script type="module" src="./js/user-loader.js"></script> 
+    <script type="module" src="./js/notifications-component.js"></script>
+    
+    <script type="module" src="./js/home-logic.js"></script>
 
     <script type="module">
         import { supabase } from './js/supabase-client.js';
-        
-        // Pequeño extra para llenar el saludo del header específicamente
         async function loadHeaderName() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const name = user.user_metadata?.full_name || user.email.split('@')[0];
                 document.getElementById('header-username-display').innerText = name.charAt(0).toUpperCase() + name.slice(1);
-                
-                // Si tiene avatar, ponerlo en el header móvil
                 if(user.user_metadata?.avatar_url) {
                     const avatarDiv = document.getElementById('header-avatar-mobile');
                     if(avatarDiv) avatarDiv.innerHTML = `<img src="${user.user_metadata.avatar_url}" class="h-full w-full rounded-full object-cover">`;

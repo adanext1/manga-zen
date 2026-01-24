@@ -6,76 +6,110 @@
     <title>Mi Biblioteca</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <script src="./js/theme-init.js"></script>
 
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: '#ff6740', background: '#0f0f0f', surface: '#18181b' }
+                }
+            }
+        }
+    </script>
     <style>
-        .glass-header { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-header { background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animación suave para cambio de tabs */
+        .tab-btn { position: relative; color: #a1a1aa; }
+        .tab-btn.active { color: white; }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+            height: 2px; background: #ff6740; border-radius: 2px 2px 0 0;
+            box-shadow: 0 -2px 10px rgba(255, 103, 64, 0.5);
+        }
     </style>
 </head>
 
-<body class="bg-background-dark text-white h-screen flex overflow-hidden selection:bg-primary selection:text-white">
+<body class="bg-background text-white h-screen flex overflow-hidden selection:bg-primary selection:text-white font-sans">
 
-    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-40 h-screen sticky top-0">
-        </aside>
+    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 justify-between shrink-0 z-40 h-screen sticky top-0"></aside>
 
     <div class="flex-1 flex flex-col h-full relative overflow-hidden">
         
         <header class="w-full glass-header z-40 shrink-0">
-            <div class="flex items-center justify-between px-4 h-16">
+            <div class="flex items-center justify-between px-5 h-16">
                 <div class="flex items-center gap-4">
-                    <a href="dashboard.html" class="md:hidden p-2 -ml-2 text-zinc-400 hover:text-white transition-colors">
+                    <a href="dashboard.html" class="md:hidden p-2 -ml-2 text-zinc-400 hover:text-white transition-colors rounded-full hover:bg-white/5">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </a>
-                    <h1 class="text-lg font-bold tracking-tight">Mi Colección</h1>
+                    <h1 class="text-xl font-bold tracking-tight">Mi Colección</h1>
                 </div>
-                <div class="flex items-center gap-4">
+                
+                <div class="flex items-center gap-3">
                     <button onclick="window.location.href='search.html'" class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition">
                         <span class="material-symbols-outlined">search</span>
                     </button>
+                    <div id="header-actions-container"></div>
                 </div>
             </div>
             
-            <div class="px-4 pb-0">
-                <div class="flex gap-6 overflow-x-auto no-scrollbar border-b border-zinc-800/50">
-                    <button class="flex flex-col items-center border-b-2 border-primary pb-3 transition-colors">
-                        <span class="text-white text-sm font-bold whitespace-nowrap">Todos</span>
-                    </button>
-                    </div>
+            <div class="px-5 pb-0">
+                <div class="flex gap-8 overflow-x-auto no-scrollbar border-b border-zinc-800/50">
+                    <button onclick="filterLibrary('all')" class="tab-btn active px-1 pb-3 text-sm font-bold whitespace-nowrap transition-colors" data-tab="all">Todos</button>
+                    <button onclick="filterLibrary('manga')" class="tab-btn px-1 pb-3 text-sm font-bold whitespace-nowrap transition-colors" data-tab="manga">Mangas</button>
+                    <button onclick="filterLibrary('anime')" class="tab-btn px-1 pb-3 text-sm font-bold whitespace-nowrap transition-colors" data-tab="anime">Animes</button>
+                    <button onclick="filterLibrary('movies')" class="tab-btn px-1 pb-3 text-sm font-bold whitespace-nowrap transition-colors" data-tab="movies">Películas</button>
+                    <button onclick="filterLibrary('series')" class="tab-btn px-1 pb-3 text-sm font-bold whitespace-nowrap transition-colors" data-tab="series">Series</button>
+                </div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto no-scrollbar p-4 pb-24 md:pb-10">
+        <main class="flex-1 overflow-y-auto no-scrollbar p-5 pb-24 md:pb-10">
             
-            <div class="flex items-center justify-between mb-4 mt-2">
-                <div class="text-[11px] font-bold text-zinc-500 tracking-widest uppercase flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">library_books</span> Tus Mangas Guardados
+            <div class="flex items-center justify-between mb-6 mt-2">
+                <div class="text-xs font-bold text-zinc-500 tracking-widest uppercase flex items-center gap-2">
+                    <span id="category-icon" class="material-symbols-outlined text-base">grid_view</span> 
+                    <span id="category-title">Todo Guardado</span>
+                    <span id="item-count" class="bg-white/10 text-white px-2 py-0.5 rounded text-[10px] ml-2">0</span>
                 </div>
+                
+                <button class="text-zinc-600 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-lg">sort</span>
+                </button>
             </div>
 
-            <div id="library-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+            <div id="library-container" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
                 <div class="aspect-[2/3] rounded-lg bg-zinc-900 animate-pulse border border-white/5"></div>
                 <div class="aspect-[2/3] rounded-lg bg-zinc-900 animate-pulse border border-white/5"></div>
                 <div class="aspect-[2/3] rounded-lg bg-zinc-900 animate-pulse border border-white/5"></div>
             </div>
             
-            <div id="empty-state" class="hidden flex-col items-center justify-center py-20 opacity-50">
-                <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                    <span class="material-symbols-outlined text-4xl text-gray-500">bookmarks</span>
+            <div id="empty-state" class="hidden flex-col items-center justify-center py-20 opacity-50 text-center">
+                <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/5">
+                    <span class="material-symbols-outlined text-5xl text-gray-600">bookmarks</span>
                 </div>
-                <h3 class="font-bold text-gray-400">Tu biblioteca está vacía</h3>
-                <p class="text-sm text-gray-600 mt-1">Guarda mangas para verlos aquí.</p>
-                <a href="search.html" class="mt-4 px-4 py-2 bg-primary/20 text-primary rounded-lg text-sm font-bold hover:bg-primary/30 transition">Explorar</a>
+                <h3 class="font-bold text-gray-300 text-lg">Colección vacía</h3>
+                <p class="text-sm text-gray-500 mt-2 max-w-xs mx-auto">No has guardado nada en esta categoría aún.</p>
+                <a href="search.html" class="mt-6 px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">explore</span> Explorar
+                </a>
             </div>
+
         </main>
+    </div>
 
-    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 glass-header border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 pb-safe">
-        </nav>
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 glass-header border-t border-zinc-800 py-3 px-8 flex justify-between items-center z-50 pb-safe"></nav>
 
     <script src="./js/nav-loader.js"></script> 
     <script type="module" src="./js/user-loader.js"></script> 
     
     <script type="module" src="./js/library-logic.js"></script>
+    <script type="module" src="./js/notifications-component.js"></script>
 
 </body>
 </html>

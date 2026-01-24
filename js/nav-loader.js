@@ -4,6 +4,7 @@
 const NAV_LINKS = [
     { name: 'Inicio',     icon: 'home',          href: 'dashboard.html' },
     { name: 'Biblioteca', icon: 'library_books', href: 'library.html' },
+    { name: 'Peticiones', icon: 'assignment_add', href: 'requests.html' },
     
     // 🔥 ESTE ES EL BOTÓN FLOTANTE (isFloating: true)
     { name: 'Explorar',   icon: 'search',        href: 'search.html', isFloating: true },

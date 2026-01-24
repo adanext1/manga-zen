@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor - AdaNext</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <style>
+        body { background-color: #000; overflow: hidden; }
+        
+        /* Ocultar cursor si no se mueve el mouse */
+        .hide-cursor { cursor: none; }
+        
+        /* Personalizar la barra de progreso del video al color naranja */
+        video::-webkit-media-controls-timeline { background-color: #ff6740; }
+        
+        /* Animación suave para la interfaz */
+        .fade-ui { transition: opacity 0.5s ease; }
+    </style>
+</head>
+
+<body class="h-screen w-screen flex flex-col items-center justify-center relative group bg-black">
+
+    <a href="javascript:history.back()" 
+       class="absolute top-6 left-6 z-50 flex items-center gap-2 text-white/70 hover:text-white bg-black/60 hover:bg-white/10 px-4 py-2 rounded-full transition-all backdrop-blur-md border border-white/5 opacity-0 group-hover:opacity-100 duration-500">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span class="font-bold text-sm">Volver</span>
+    </a>
+
+    <div class="w-full h-full relative flex items-center justify-center">
+        
+        <video id="video-player" 
+               class="w-full h-full max-h-screen object-contain focus:outline-none" 
+               controls 
+               autoplay
+               crossorigin="anonymous">
+        </video>
+        
+        <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden bg-black/20 backdrop-blur-sm z-10">
+            <div class="flex flex-col items-center gap-3">
+                <span class="material-symbols-outlined text-6xl text-[#ff6740] animate-spin">progress_activity</span>
+                <span class="text-white text-sm font-bold tracking-widest animate-pulse">CARGANDO</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 p-8 pb-16 bg-gradient-to-t from-black via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-20">
+        <h1 id="video-title" class="text-2xl md:text-3xl font-bold text-white drop-shadow-md">Cargando título...</h1>
+        <p id="video-status" class="text-sm text-[#ff6740] font-medium mt-1">MAXIMA CALIDAD DISPONIBLE</p>
+    </div>
+
+    <script type="module" src="./js/watch-logic.js"></script>
+</body>
+</html>

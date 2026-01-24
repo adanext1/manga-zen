@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Peticiones - AdaNext</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <script src="./js/theme-init.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff6740',
+                        background: '#0f0f0f',
+                        surface: '#18181b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background text-white h-screen flex overflow-hidden font-sans">
+
+    <aside id="sidebar-container" class="hidden md:flex flex-col w-72 border-r border-white/5 bg-[#120b18] p-6 shrink-0 z-40 h-screen sticky top-0"></aside>
+
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden">
+        
+        <header class="w-full glass px-8 py-4 border-b border-white/5 flex justify-between items-center bg-surface/50 backdrop-blur-md">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">campaign</span> Centro de Peticiones
+            </h1>
+            
+            <div class="flex items-center gap-4">
+                <div id="header-actions-container"></div>
+                
+                <div id="user-badge"></div> 
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-surface border border-white/10 rounded-2xl p-6 shadow-xl">
+                        <h2 class="text-lg font-bold mb-4 text-gray-200">Realizar Petición</h2>
+                        <p class="text-xs text-gray-400 mb-6">¿No encuentras lo que buscas? Pídelo aquí y trataremos de subirlo.</p>
+                        
+                        <form id="request-form" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título</label>
+                                <input type="text" id="req-title" required placeholder="Ej: Interestelar, Naruto Shippuden..." 
+                                    class="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="category" value="Anime" class="peer sr-only" checked>
+                                        <div class="p-2 rounded-lg border border-white/10 bg-white/5 text-center text-sm text-gray-400 peer-checked:bg-primary/20 peer-checked:border-primary peer-checked:text-primary transition-all">Anime</div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="category" value="Pelicula" class="peer sr-only">
+                                        <div class="p-2 rounded-lg border border-white/10 bg-white/5 text-center text-sm text-gray-400 peer-checked:bg-primary/20 peer-checked:border-primary peer-checked:text-primary transition-all">Película</div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="category" value="Serie" class="peer sr-only">
+                                        <div class="p-2 rounded-lg border border-white/10 bg-white/5 text-center text-sm text-gray-400 peer-checked:bg-primary/20 peer-checked:border-primary peer-checked:text-primary transition-all">Serie</div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="category" value="Documental" class="peer sr-only">
+                                        <div class="p-2 rounded-lg border border-white/10 bg-white/5 text-center text-sm text-gray-400 peer-checked:bg-primary/20 peer-checked:border-primary peer-checked:text-primary transition-all">Docu</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="btn-submit" 
+                                class="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-lg shadow-lg shadow-primary/20 transition-all flex justify-center items-center gap-2">
+                                <span>Enviar Petición</span>
+                                <span class="material-symbols-outlined text-[18px]">send</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3">
+                        <span class="material-symbols-outlined text-blue-400">info</span>
+                        <p class="text-xs text-blue-200">
+                            Revisa la lista de la derecha antes de pedir. Si ya existe, ¡vota por ella para que la subamos antes!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <div class="flex justify-between items-end mb-4">
+                        <h2 class="text-lg font-bold text-gray-200">Peticiones de la Comunidad</h2>
+                        <div class="flex gap-2 text-xs">
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> Pendiente</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> Listo</span>
+                        </div>
+                    </div>
+
+                    <div id="requests-list" class="space-y-3 pb-10">
+                        <div class="animate-pulse bg-surface border border-white/5 rounded-xl p-4 h-20"></div>
+                        <div class="animate-pulse bg-surface border border-white/5 rounded-xl p-4 h-20"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <nav id="mobile-nav-container" class="md:hidden fixed bottom-0 inset-x-0 bg-surface/90 backdrop-blur border-t border-white/10 py-3 px-8 flex justify-between items-center z-50 pb-safe"></nav>
+
+    <script src="./js/nav-loader.js"></script> 
+    <script type="module" src="./js/requests-logic.js"></script> 
+    <script type="module" src="./js/notifications-component.js"></script>
+</body>
+</html>

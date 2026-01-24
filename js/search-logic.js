@@ -1,48 +1,435 @@
-// js/search-logic.js
 import { supabase } from './supabase-client.js';
 import { toggleFavorite } from './db.js';
+// 🔥 IMPORTAMOS LA NUEVA FUNCIÓN getJellyfinCatalog
+import { getJellyfinSearch, getJellyfinLatest, getJellyfinCatalog } from './jellyfin-client.js'; 
 
+// --- CONFIGURACIÓN ---
 const PROXY = 'https://corsproxy.io/?'; 
 const BASE_URL = 'https://api.mangadex.org';
 const COVER_BASE = 'https://uploads.mangadex.org/covers';
 
-// --- VARIABLES GLOBALES ---
-let debounceTimer;
-const HISTORY_KEY = 'mangazen_search_history';
+// --- ESTADO GLOBAL ---
+let currentTab = 'all'; 
+let searchTimeout = null;
+let USER_PERMISSIONS = { show_anime: true, show_manga: true, show_movies: true };
 let myLibraryCache = []; 
 
-// ESTADO DE FILTROS
+// --- ESTADO DE FILTROS ---
 let filterState = {
-    query: '',
-    sort: 'followedCount',
+    query: '', sort: 'followedCount',
     status: [], demographic: [], content: ['safe', 'suggestive'], 
-    tags: [], langs: ['es', 'es-la'], origLang: [], offset: 0 
+    tags: [], langs: ['es', 'es-la'], origLang: [], 
+    offset: 0, 
+    jellyfinOffset: 0 // Nuevo offset independiente para Jellyfin
 };
 
-// --- INICIALIZACIÓN ---
+// ==========================================
+// 1. INICIALIZACIÓN
+// ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Cargamos tags (si existe el contenedor)
-    await loadTagsFromApi();
-    
-    // 2. Cargamos librería local
-    loadLocalLibrary(); 
-    
-    // 3. Configuramos el buscador (SOLO si existe el input)
+    await Promise.all([loadPermissions(), loadLocalLibrary(), loadTagsFromApi()]);
+    setupTabs();
     setupSearchInput();
     
-    // 4. Chequeamos URL
-    checkUrlForTags();
+    // Carga inicial (Descubrimiento)
+    if (!filterState.query) loadInitialDiscovery();
     
-    // 5. Búsqueda inicial automática (SOLO si existe la grilla de resultados)
-    if (document.getElementById('manga-grid')) {
-        performSearch(true); 
-    }
+    checkUrlForTags();
 });
+
+// ... (loadPermissions y loadLocalLibrary IGUAL QUE ANTES) ...
+async function loadPermissions() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if(user) {
+        const { data } = await supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle();
+        if(data) USER_PERMISSIONS = data;
+    }
+    if(!USER_PERMISSIONS.show_manga) document.querySelector('[data-cat="manga"]')?.classList.add('hidden');
+    if(!USER_PERMISSIONS.show_anime) document.querySelector('[data-cat="anime"]')?.classList.add('hidden');
+    if(!USER_PERMISSIONS.show_movies) document.querySelector('[data-cat="movies"]')?.classList.add('hidden');
+}
+
+async function loadLocalLibrary() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from('library').select('manga_id');
+    if (data) myLibraryCache = data.map(i => i.manga_id);
+}
+
+// ==========================================
+// 2. MODO DESCUBRIMIENTO (Inicio)
+// ==========================================
+async function loadInitialDiscovery() {
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('results-container').classList.remove('hidden');
+    document.getElementById('results-dashboard').classList.remove('hidden');
+    document.getElementById('full-grid').classList.add('hidden');
+    document.getElementById('load-more-container').classList.add('hidden'); // Ocultar cargar más en Dashboard
+
+    const promises = [];
+    if (USER_PERMISSIONS.show_anime) {
+        document.getElementById('sec-anime').classList.remove('hidden');
+        promises.push(getJellyfinLatest('Series').then(items => renderDiscoveryItems(items, 'list-anime', 'details-video.html')));
+    }
+    if (USER_PERMISSIONS.show_movies) {
+        document.getElementById('sec-movies').classList.remove('hidden');
+        promises.push(getJellyfinLatest('movies').then(items => renderDiscoveryItems(items, 'list-movies', 'details-video.html')));
+    }
+    if (USER_PERMISSIONS.show_manga) {
+        document.getElementById('sec-manga').classList.remove('hidden');
+        promises.push(getMangaDexLatest().then(items => renderDiscoveryItems(items, 'list-manga', 'details.html')));
+    }
+    await Promise.all(promises);
+}
+
+// ... (renderDiscoveryItems y getMangaDexLatest IGUAL QUE ANTES) ...
+function renderDiscoveryItems(items, containerId, baseUrl) {
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    container.innerHTML = '';
+    items.forEach(item => {
+        const id = item.id || item.Id; const title = item.title || item.Name; const img = item.cover || item.img; const tag = item.tag || '';
+        const isFav = myLibraryCache.includes(id);
+        const btnClass = isFav ? "bg-primary text-white" : "bg-black/60 text-white/70 hover:bg-primary hover:text-white";
+        const btnIcon = isFav ? "bookmark" : "bookmark_add";
+        const html = `
+        <div class="group relative aspect-[2/3] w-32 md:w-40 snap-start shrink-0 rounded-xl overflow-hidden bg-zinc-900 border border-white/5 cursor-pointer" onclick="window.location.href='${baseUrl}?id=${id}'">
+            <img class="absolute inset-0 size-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" src="${img}" loading="lazy" />
+            <button onclick="toggleQuickSave(event, '${id}', '${encodeURIComponent(title)}', '${img}', this)" class="absolute top-2 right-2 p-1.5 rounded-full z-20 transition-all ${btnClass}">
+                <span class="material-symbols-outlined text-[16px]">${btnIcon}</span>
+            </button>
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-2">
+                <h4 class="text-xs font-bold text-white line-clamp-2 leading-tight text-shadow">${title}</h4>
+                ${tag ? `<span class="text-[9px] text-gray-400">${tag}</span>` : ''}
+            </div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+    });
+}
+
+async function getMangaDexLatest() {
+    try {
+        const url = `${BASE_URL}/manga?limit=10&includes[]=cover_art&order[latestUploadedChapter]=desc&contentRating[]=safe&contentRating[]=suggestive`;
+        const res = await fetch(PROXY + encodeURIComponent(url));
+        const json = await res.json();
+        return json.data.map(m => {
+            const attr = m.attributes;
+            const rel = m.relationships.find(r => r.type === 'cover_art');
+            const fname = rel ? rel.attributes.fileName : '';
+            return {
+                id: m.id, title: attr.title.en || Object.values(attr.title)[0],
+                cover: fname ? PROXY + encodeURIComponent(`${COVER_BASE}/${m.id}/${fname}.256.jpg`) : '', tag: 'Nuevo'
+            };
+        });
+    } catch { return []; }
+}
+
+// ==========================================
+// 3. LÓGICA DE PESTAÑAS (Aquí está el cambio clave)
+// ==========================================
+function setupTabs() {
+    document.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // UI Update
+            document.querySelectorAll('.chip').forEach(c => {
+                c.classList.remove('bg-white', 'text-black');
+                c.classList.add('bg-white/5', 'text-gray-400');
+            });
+            btn.classList.remove('bg-white/5', 'text-gray-400');
+            btn.classList.add('bg-white', 'text-black');
+
+            currentTab = btn.dataset.cat;
+            
+            // Mostrar/Ocultar botón filtros
+            const filterBtn = document.getElementById('btn-filters');
+            if(filterBtn) filterBtn.classList.toggle('hidden', currentTab !== 'manga');
+
+            const query = document.getElementById('search-input').value.trim();
+            
+            // RESETEAR OFFSETS AL CAMBIAR PESTAÑA
+            filterState.offset = 0;
+            filterState.jellyfinOffset = 0;
+            document.getElementById('full-grid').innerHTML = ''; // Limpiar grid
+
+            if(query.length >= 3) {
+                // Si hay búsqueda, buscamos
+                performMasterSearch(query, true);
+            } else {
+                // 🔥 SI NO HAY BÚSQUEDA, CARGAMOS CATÁLOGO
+                if(currentTab === 'all') loadInitialDiscovery();
+                else loadCategoryCatalog(currentTab);
+            }
+        });
+    });
+}
+
+// 🔥 NUEVA FUNCIÓN: Cargar Catálogo (Sin buscar)
+async function loadCategoryCatalog(category) {
+    document.getElementById('results-dashboard').classList.add('hidden');
+    document.getElementById('full-grid').classList.remove('hidden');
+    document.getElementById('load-more-container').classList.remove('hidden'); // Mostrar botón cargar más
+    
+    showLoader(true);
+
+    if (category === 'manga') {
+        // Para catálogo manga, forzamos orden por popularidad si no hay query
+        if(!filterState.query) filterState.sort = 'followedCount';
+        await searchMangaDexWrapper('', 20, 'grid'); 
+    } else if (category === 'anime') {
+        await loadJellyfinCatalogWrapper('Series', 'grid');
+    } else if (category === 'movies') {
+        await loadJellyfinCatalogWrapper('movies', 'grid');
+    }
+    
+    showLoader(false);
+}
+
+// ==========================================
+// 4. BÚSQUEDA Y CARGAR MÁS
+// ==========================================
+function setupSearchInput() {
+    const input = document.getElementById('search-input');
+    input.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        filterState.query = query; 
+        clearTimeout(searchTimeout);
+        
+        if(query.length === 0) {
+            // Si borra, volvemos al estado inicial de la pestaña actual
+            if(currentTab === 'all') loadInitialDiscovery();
+            else loadCategoryCatalog(currentTab);
+            return;
+        }
+
+        if(query.length < 3) return; 
+        // Reset offsets para nueva búsqueda
+        filterState.offset = 0;
+        filterState.jellyfinOffset = 0;
+        searchTimeout = setTimeout(() => performMasterSearch(query, true), 500);
+    });
+}
+
+async function performMasterSearch(query, isNewSearch = false) {
+    showLoader(true);
+    const containerAll = document.getElementById('results-dashboard');
+    const containerGrid = document.getElementById('full-grid');
+    
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('results-container').classList.remove('hidden');
+
+    if(isNewSearch) containerGrid.innerHTML = '';
+
+    try {
+        if (currentTab === 'all') {
+            containerAll.classList.remove('hidden');
+            containerGrid.classList.add('hidden');
+            document.getElementById('load-more-container').classList.add('hidden'); // Sin cargar más en "Todo"
+            
+            const promises = [];
+            if (USER_PERMISSIONS.show_anime) promises.push(searchJellyfinWrapper(query, 'Series', 'anime'));
+            if (USER_PERMISSIONS.show_movies) promises.push(searchJellyfinWrapper(query, 'movies', 'movies'));
+            if (USER_PERMISSIONS.show_manga) promises.push(searchMangaDexWrapper(query, 5, 'manga'));
+            await Promise.all(promises);
+        } else {
+            containerAll.classList.add('hidden');
+            containerGrid.classList.remove('hidden');
+            document.getElementById('load-more-container').classList.remove('hidden');
+
+            if (currentTab === 'manga') await searchMangaDexWrapper(query, 20, 'grid'); 
+            else if (currentTab === 'anime') await searchJellyfinWrapper(query, 'Series', 'grid');
+            else if (currentTab === 'movies') await searchJellyfinWrapper(query, 'movies', 'grid');
+        }
+    } catch (e) { console.error(e); } finally { showLoader(false); }
+}
+
+// 🔥 FUNCIÓN CARGAR MÁS ACTUALIZADA
+window.loadMore = function() {
+    // Si hay texto, usamos la búsqueda. Si no, usamos el catálogo.
+    if (filterState.query) {
+        // Aumentamos offset
+        if (currentTab === 'manga') filterState.offset += 20;
+        if (currentTab === 'anime' || currentTab === 'movies') filterState.jellyfinOffset += 20;
+        
+        performMasterSearch(filterState.query, false); // false = append (no borrar)
+    } else {
+        // Modo Catálogo
+        if (currentTab === 'manga') {
+            filterState.offset += 20;
+            searchMangaDexWrapper('', 20, 'grid');
+        } else {
+            filterState.jellyfinOffset += 20;
+            const type = currentTab === 'anime' ? 'Series' : 'movies';
+            loadJellyfinCatalogWrapper(type, 'grid');
+        }
+    }
+}
+
+// ==========================================
+// 5. WRAPPERS (Conexión APIs)
+// ==========================================
+
+// Wrapper para BÚSQUEDA Jellyfin (Por nombre)
+async function searchJellyfinWrapper(query, type, renderMode) {
+    const targetId = renderMode === 'grid' ? 'full-grid' : (type === 'Series' ? 'list-anime' : 'list-movies');
+    const container = document.getElementById(targetId);
+    if(!container) return;
+
+    if(renderMode !== 'grid') {
+        if(type === 'Series') document.getElementById('sec-anime').classList.remove('hidden');
+        if(type === 'movies') document.getElementById('sec-movies').classList.remove('hidden');
+    }
+
+    // Nota: Jellyfin Search no soporta paginación fácil en este endpoint wrapper simple, 
+    // pero para búsqueda está bien.
+    const jellyItems = await getJellyfinSearch(query, type === 'movies' ? 'Movie' : 'Series'); 
+    
+    const items = jellyItems.map(j => ({
+        id: j.Id, title: j.Name, cover: j.Image, type: 'video', 
+        status: j.ProductionYear || '', flag: '' 
+    }));
+
+    renderCards(items, container, renderMode === 'grid');
+}
+
+// 🔥 NUEVO WRAPPER: Para CATÁLOGO Jellyfin (Sin nombre, solo lista)
+async function loadJellyfinCatalogWrapper(type, renderMode) {
+    const container = document.getElementById('full-grid');
+    if(!container) return;
+
+    // Usamos el offset nuevo de Jellyfin
+    const jellyItems = await getJellyfinCatalog(type, 20, filterState.jellyfinOffset);
+
+    const items = jellyItems.map(j => ({
+        id: j.Id, title: j.Name, cover: j.Image, type: 'video', 
+        status: j.ProductionYear || '', flag: '' 
+    }));
+    
+    // Si no hay más items, ocultar botón cargar más
+    if(items.length < 20) document.getElementById('load-more-container').classList.add('hidden');
+
+    renderCards(items, container, true); // true = grid
+}
+
+async function searchMangaDexWrapper(query, limit, renderMode) {
+    const targetId = renderMode === 'grid' ? 'full-grid' : 'list-manga';
+    const container = document.getElementById(targetId);
+    if(!container) return;
+    
+    if(renderMode === 'manga') document.getElementById('sec-manga').classList.remove('hidden');
+
+    const url = new URL(`${BASE_URL}/manga`);
+    if (query) url.searchParams.append('title', query);
+    
+    // Filtros
+    if (currentTab === 'manga') { 
+        url.searchParams.append(`order[${filterState.sort}]`, 'desc');
+        filterState.status.forEach(s => url.searchParams.append('status[]', s));
+        filterState.demographic.forEach(d => url.searchParams.append('publicationDemographic[]', d));
+        filterState.tags.forEach(t => url.searchParams.append('includedTags[]', t));
+    } else { url.searchParams.append('order[relevance]', 'desc'); }
+
+    url.searchParams.append('limit', limit);
+    url.searchParams.append('offset', filterState.offset); // Offset MangaDex
+    url.searchParams.append('contentRating[]', 'safe');
+    url.searchParams.append('contentRating[]', 'suggestive');
+    url.searchParams.append('includes[]', 'cover_art');
+    url.searchParams.append('availableTranslatedLanguage[]', 'es'); 
+
+    const res = await fetch(PROXY + encodeURIComponent(decodeURIComponent(url.toString())));
+    const json = await res.json();
+    
+    const items = json.data.map(m => {
+        const attr = m.attributes;
+        const rel = m.relationships.find(r => r.type === 'cover_art');
+        const fname = rel ? rel.attributes.fileName : '';
+        return {
+            id: m.id,
+            title: attr.title.en || Object.values(attr.title)[0],
+            cover: fname ? PROXY + encodeURIComponent(`${COVER_BASE}/${m.id}/${fname}.512.jpg`) : '',
+            type: 'manga',
+            status: attr.status,
+            flag: attr.originalLanguage === 'ja' ? '🇯🇵' : (attr.originalLanguage === 'ko' ? '🇰🇷' : '')
+        };
+    });
+
+    renderCards(items, container, renderMode === 'grid');
+}
+
+// ==========================================
+// 6. RENDERIZADO COMÚN & UTILS
+// ==========================================
+function renderCards(items, container, isGrid) {
+    // Si es grid Y offset es 0 (primera carga), limpiar. 
+    // Si estamos en "cargar más" (offset > 0), NO limpiar.
+    if(isGrid && filterState.offset === 0 && filterState.jellyfinOffset === 0 && !document.getElementById('load-more-container').classList.contains('loading')) {
+         // Ojo: Esta lógica es delicada. Mejor: performMasterSearch borra grid si isNewSearch=true.
+         // Aquí solo borramos si no estamos en modo append.
+         // Simplificación: Si el contenedor tiene hijos y items > 0, es append.
+    } 
+    // Corrección para simplicidad: performMasterSearch ya limpia el grid si es nueva búsqueda.
+    // loadCategoryCatalog también. Así que aquí solo agregamos HTML.
+    
+    // OJO: Si es la fila horizontal (no grid), siempre limpiamos
+    if(!isGrid) container.innerHTML = '';
+
+    if (items.length === 0 && isGrid && container.children.length === 0) {
+        container.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">No hay más resultados.</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        const isFav = myLibraryCache.includes(item.id);
+        const btnClass = isFav ? "bg-primary text-white" : "bg-black/60 text-white/70 hover:bg-primary hover:text-white";
+        const btnIcon = isFav ? "bookmark" : "bookmark_add";
+        const link = item.type === 'manga' ? `details.html?id=${item.id}` : `details-video.html?id=${item.id}`;
+        const layoutClass = isGrid ? '' : 'snap-start shrink-0 w-32 md:w-40';
+
+        const card = `
+        <div class="group relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-white/5 cursor-pointer ${layoutClass}" onclick="window.location.href='${link}'">
+            <img class="absolute inset-0 size-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" src="${item.cover}" loading="lazy" />
+            <button onclick="toggleQuickSave(event, '${item.id}', '${encodeURIComponent(item.title)}', '${item.cover}', this)" class="absolute top-2 right-2 p-1.5 rounded-full z-20 transition-all ${btnClass}">
+                <span class="material-symbols-outlined text-[18px]">${btnIcon}</span>
+            </button>
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-2">
+                <h4 class="text-xs font-bold text-white line-clamp-2 leading-tight text-shadow">${item.title}</h4>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs">${item.flag}</span>
+                    ${item.status ? `<span class="text-[9px] text-gray-400 capitalize bg-black/50 px-1 rounded">${item.status}</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', card);
+    });
+}
+
+window.toggleQuickSave = async (event, id, titleEncoded, coverUrl, btn) => {
+    event.stopPropagation();
+    const title = decodeURIComponent(titleEncoded);
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span>';
+    const isNowFav = await toggleFavorite(id, title, coverUrl);
+    if(isNowFav) myLibraryCache.push(id); else myLibraryCache = myLibraryCache.filter(i => i !== id);
+    if (isNowFav) {
+        btn.className = "absolute top-2 right-2 p-1.5 rounded-full z-20 transition-all bg-primary text-white";
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">bookmark</span>';
+    } else {
+        btn.className = "absolute top-2 right-2 p-1.5 rounded-full z-20 transition-all bg-black/60 text-white/70 hover:bg-primary hover:text-white";
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">bookmark_add</span>';
+    }
+};
+
+function showLoader(show) {
+    const loader = document.getElementById('search-loader');
+    if(show) loader.classList.remove('hidden'); else loader.classList.add('hidden');
+}
+
+// ==========================================
+// 6. HELPER FUNCTIONS (Tags, Filtros y UI)
+// ==========================================
 
 // --- CARGAR TAGS DESDE API ---
 async function loadTagsFromApi() {
     const container = document.getElementById('genres-container');
-    if(!container) return; // Evita error si no hay contenedor de tags
+    if(!container) return; 
 
     try {
         const res = await fetch(PROXY + encodeURIComponent(`${BASE_URL}/manga/tag`));
@@ -59,6 +446,9 @@ async function loadTagsFromApi() {
         const renderSection = (title, tagList) => {
             if(tagList.length === 0) return;
             tagList.sort((a, b) => a.attributes.name.en.localeCompare(b.attributes.name.en));
+            
+            // Título de sección (opcional, si quieres separar visualmente)
+            // container.innerHTML += `<h4 class="text-xs font-bold text-gray-500 uppercase w-full mt-2 mb-1">${title}</h4>`;
 
             tagList.forEach(tag => {
                 const nameEn = tag.attributes.name.en;
@@ -69,7 +459,8 @@ async function loadTagsFromApi() {
                 btn.className = `filter-chip px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-gray-300 hover:bg-white/10 transition-all select-none whitespace-nowrap`;
                 btn.innerText = nameEs;
                 btn.dataset.id = id;
-                btn.onclick = () => toggleFilterChip(btn, 'tags', id);
+                // Importante: Aquí llamamos a la función global
+                btn.onclick = () => window.toggleFilterChip(btn, 'tags', id);
                 container.appendChild(btn);
             });
         };
@@ -105,8 +496,12 @@ function checkUrlForTags() {
     const tagFromUrl = params.get('tag');
 
     if (tagFromUrl) {
+        // Forzamos la pestaña a Manga si vienes por un tag
+        document.querySelector('[data-cat="manga"]').click();
+        
         filterState.tags = [tagFromUrl];
         filterState.query = ''; 
+        
         setTimeout(() => {
             const btn = document.querySelector(`.filter-chip[data-id="${tagFromUrl}"]`);
             if(btn) {
@@ -114,176 +509,21 @@ function checkUrlForTags() {
                 btn.classList.remove('bg-white/5', 'text-gray-300');
                 btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
+            performMasterSearch(''); // Ejecutar búsqueda
         }, 500);
     }
 }
 
-async function loadLocalLibrary() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase.from('library').select('manga_id, manga_title').eq('user_id', user.id);
-    if (data) myLibraryCache = data;
-}
-
-// --- INPUT & SEARCH (ARREGLADO AQUÍ) ---
-function setupSearchInput() {
-    const input = document.getElementById('search-input');
-    const dropdown = document.getElementById('search-dropdown');
-
-    // ARREGLO PRINCIPAL: Si no existe el input, detenemos la función aquí
-    if (!input) return;
-
-    input.addEventListener('focus', () => {
-        if (input.value.trim() === '') showSearchHistory();
-        else handleInput(input.value);
-    });
-    input.addEventListener('input', (e) => handleInput(e.target.value));
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            commitSearch(input.value);
-            input.blur();
-        }
-    });
-    
-    // Solo agregamos el listener global si el dropdown existe
-    if (dropdown) {
-        document.addEventListener('click', (e) => {
-            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-    }
-}
-
-function handleInput(val) {
-    const dropdown = document.getElementById('search-dropdown');
-    if(!dropdown) return;
-    clearTimeout(debounceTimer);
-
-    if (val.trim() === '') { showSearchHistory(); return; }
-
-    const localMatches = myLibraryCache.filter(item => 
-        item.manga_title.toLowerCase().includes(val.toLowerCase())
-    ).slice(0, 3);
-    renderDropdownResults(localMatches, true); 
-
-    debounceTimer = setTimeout(() => { liveSearchApi(val, localMatches); }, 1000);
-}
-
-function renderDropdownResults(localItems, isLoadingApi) {
-    const dropdown = document.getElementById('search-dropdown');
-    if (!dropdown) return; // Seguridad extra
-    
-    dropdown.classList.remove('hidden');
-    let html = '';
-
-    if (localItems.length > 0) {
-        html += `<div class="px-4 py-2 text-xs font-bold text-primary uppercase tracking-wider bg-primary/5 border-b border-primary/10">En tu biblioteca</div>`;
-        localItems.forEach(item => {
-            html += `<div onclick="goToManga('${item.manga_id}')" class="px-4 py-3 flex items-center gap-3 hover:bg-white/5 cursor-pointer text-white border-b border-white/5 group"><span class="material-symbols-outlined text-primary text-[20px]">bookmark</span><span class="line-clamp-1 font-medium">${item.manga_title}</span></div>`;
-        });
-    }
-    if (isLoadingApi) {
-        html += `<div id="api-loading-indicator" class="p-3 text-center text-gray-500 flex items-center justify-center gap-2 text-xs"><span class="material-symbols-outlined animate-spin text-[16px]">sync</span> Buscando en MangaDex...</div>`;
-    }
-    dropdown.innerHTML = html;
-}
-
-async function liveSearchApi(query, localMatches) {
-    try {
-        const url = new URL(`${BASE_URL}/manga`);
-        url.searchParams.append('title', query);
-        url.searchParams.append('limit', 5);
-        url.searchParams.append('contentRating[]', 'safe');
-        url.searchParams.append('contentRating[]', 'suggestive');
-
-        const cleanUrl = decodeURIComponent(url.toString());
-        const res = await fetch(PROXY + encodeURIComponent(cleanUrl));
-        const json = await res.json();
-
-        const apiResults = json.data.map(m => ({
-            manga_id: m.id,
-            manga_title: m.attributes.title.en || m.attributes.title.es || Object.values(m.attributes.title)[0]
-        })).filter(apiItem => !localMatches.some(local => local.manga_id === apiItem.manga_id));
-
-        const dropdown = document.getElementById('search-dropdown');
-        if(!dropdown) return;
-        const loadingDiv = document.getElementById('api-loading-indicator');
-        if(loadingDiv) loadingDiv.remove();
-
-        if (apiResults.length > 0) {
-            let currentHtml = dropdown.innerHTML;
-            currentHtml += `<div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider mt-2 border-t border-white/10">Sugerencias</div>`;
-            apiResults.forEach(item => {
-                currentHtml += `<div onclick="goToManga('${item.manga_id}')" class="px-4 py-3 flex items-center gap-3 hover:bg-white/5 cursor-pointer text-gray-300 hover:text-white border-b border-white/5 group"><span class="material-symbols-outlined text-gray-600 group-hover:text-white text-[20px]">public</span><span class="line-clamp-1">${item.manga_title}</span></div>`;
-            });
-            dropdown.innerHTML = currentHtml;
-        } else if (localMatches.length === 0) {
-            dropdown.innerHTML = `<div class="p-4 text-center text-gray-500">No se encontraron resultados</div>`;
-        }
-    } catch (e) { console.error(e); }
-}
-
-function showSearchHistory() {
-    const dropdown = document.getElementById('search-dropdown');
-    if(!dropdown) return;
-    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    if (history.length === 0) { dropdown.classList.add('hidden'); return; }
-    let html = `<div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between"><span>Recientes</span><button onclick="clearHistory()" class="text-primary hover:text-white">Borrar</button></div>`;
-    history.forEach(term => {
-        html += `<div onclick="commitSearch('${term}')" class="px-4 py-3 flex items-center gap-3 hover:bg-white/5 cursor-pointer text-gray-300 hover:text-white transition-colors border-b border-white/5 last:border-0"><span class="material-symbols-outlined text-gray-500 text-[20px]">history</span><span>${term}</span></div>`;
-    });
-    dropdown.innerHTML = html;
-    dropdown.classList.remove('hidden');
-}
-
-window.commitSearch = function(term) {
-    const input = document.getElementById('search-input');
-    if(input) input.value = term; // Check de seguridad
-
-    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    history = history.filter(h => h !== term);
-    history.unshift(term);
-    if (history.length > 5) history.pop();
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-
-    filterState.query = term;
-    filterState.tags = [];
-    filterState.offset = 0;
-    
-    // Solo busca si existe la grilla
-    if(document.getElementById('manga-grid')) {
-        performSearch(true);
-    } else {
-        // Opcional: Redirigir al home con el query parameter si estás en details
-        // window.location.href = `index.html?search=${term}`;
-    }
-    
-    document.querySelectorAll('.filter-chip').forEach(b => {
-        b.classList.remove('bg-primary/20', 'border-primary', 'text-white', 'active');
-        b.classList.add('bg-white/5', 'text-gray-300');
-    });
-    
-    const dropdown = document.getElementById('search-dropdown');
-    if(dropdown) dropdown.classList.add('hidden');
-};
-
-window.clearHistory = function() {
-    localStorage.removeItem(HISTORY_KEY);
-    const dropdown = document.getElementById('search-dropdown');
-    if(dropdown) dropdown.classList.add('hidden');
-};
-
-window.goToManga = function(id) { window.location.href = `details.html?id=${id}`; };
-
-// --- LOGICA DE FILTROS ---
+// ==========================================
+// 7. FUNCIONES WINDOW (Botones HTML)
+// ==========================================
 
 window.toggleFilterChip = function(btn, category, value) {
     const isActive = btn.classList.contains('active');
     
+    // Limpiamos la barra de búsqueda si usas filtros
     const input = document.getElementById('search-input');
     if(input) input.value = '';
-
     filterState.query = ''; 
     
     if (isActive) {
@@ -323,142 +563,38 @@ window.resetFilters = function() {
         btn.classList.remove('bg-primary/20', 'border-primary', 'text-white', 'active');
         btn.classList.add('bg-white/5', 'text-gray-300');
     });
-    setSort('followedCount');
+    window.setSort('followedCount');
     
-    if(document.getElementById('manga-grid')) performSearch(true);
+    // Recargar
+    performMasterSearch('');
 };
 
 window.applySearch = function() {
     filterState.offset = 0; 
-    toggleFilters(); 
-    if(document.getElementById('manga-grid')) performSearch(true);
+    window.toggleFilters(); 
+    performMasterSearch('');
 };
 
 window.toggleFilters = function() {
     const overlay = document.getElementById('filter-overlay');
     const panel = document.getElementById('filter-panel');
-    // Chequeo por si el modal no existe en esta página
     if(!overlay || !panel) return;
 
     const isClosed = overlay.classList.contains('opacity-0');
-    if (isClosed) { overlay.classList.remove('opacity-0', 'pointer-events-none'); panel.classList.remove('translate-y-full'); } 
-    else { overlay.classList.add('opacity-0', 'pointer-events-none'); panel.classList.add('translate-y-full'); }
+    if (isClosed) { 
+        overlay.classList.remove('opacity-0', 'pointer-events-none'); 
+        panel.classList.remove('translate-y-full'); 
+    } else { 
+        overlay.classList.add('opacity-0', 'pointer-events-none'); 
+        panel.classList.add('translate-y-full'); 
+    }
 };
 
 window.loadMore = function() {
     filterState.offset += 20;
-    performSearch(false); 
-}
-
-window.toggleQuickSave = async (event, id, titleEncoded, coverUrl, btn) => {
-    event.stopPropagation();
-    const title = decodeURIComponent(titleEncoded);
-    btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span>';
-    const isNowFav = await toggleFavorite(id, title, coverUrl);
-    if(isNowFav) myLibraryCache.push({ manga_id: id, manga_title: title });
-    else myLibraryCache = myLibraryCache.filter(i => i.manga_id !== id);
-
-    if (isNowFav) {
-        btn.className = "absolute top-2 right-2 p-2 rounded-full z-20 transition-all bg-primary text-white shadow-lg shadow-primary/40";
-        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">bookmark</span>';
-    } else {
-        btn.className = "absolute top-2 right-2 p-2 rounded-full z-20 transition-all bg-black/60 text-white/70 hover:bg-primary hover:text-white border border-white/10";
-        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">bookmark_add</span>';
-    }
-};
-
-// --- API FETCH PRINCIPAL ---
-async function performSearch(isNewSearch = true) {
-    const grid = document.getElementById('manga-grid');
-    // ARREGLO EXTRA: Si no hay grid (estamos en details.html por ejemplo), salimos.
-    if (!grid) return;
-
-    const countLabel = document.getElementById('results-count');
-    const loadMoreBtn = document.getElementById('load-more-container');
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (isNewSearch) {
-        grid.innerHTML = Array(10).fill(0).map(() => `<div class="aspect-[2/3] rounded-xl bg-white/5 animate-pulse"></div>`).join('');
-    }
-
-    try {
-        const url = new URL(`${BASE_URL}/manga`);
-        if (filterState.query) url.searchParams.append('title', filterState.query);
-        url.searchParams.append(`order[${filterState.sort}]`, 'desc');
-        filterState.status.forEach(s => url.searchParams.append('status[]', s));
-        filterState.demographic.forEach(d => url.searchParams.append('publicationDemographic[]', d));
-        filterState.content.forEach(c => url.searchParams.append('contentRating[]', c));
-        filterState.tags.forEach(t => url.searchParams.append('includedTags[]', t));
-        filterState.langs.forEach(l => url.searchParams.append('availableTranslatedLanguage[]', l));
-        filterState.origLang.forEach(l => url.searchParams.append('originalLanguage[]', l));
-        url.searchParams.append('limit', 20);
-        url.searchParams.append('offset', filterState.offset);
-        url.searchParams.append('includes[]', 'cover_art');
-
-        const cleanUrl = decodeURIComponent(url.toString());
-        const res = await fetch(PROXY + encodeURIComponent(cleanUrl));
-        
-        const json = await res.json();
-        const mangas = json.data;
-
-        if (isNewSearch && countLabel) {
-            countLabel.innerText = `${json.total} Títulos`;
-            grid.innerHTML = '';
-        } else if (isNewSearch) {
-             grid.innerHTML = ''; // Si countLabel no existe, al menos limpiamos el grid
-        }
-
-        if (!mangas || mangas.length === 0) {
-            if(isNewSearch) grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">No se encontraron resultados.</p>';
-            if(loadMoreBtn) loadMoreBtn.classList.add('hidden');
-            return;
-        }
-
-        const mangaIds = mangas.map(m => m.id);
-        const librarySet = new Set();
-        if (user) {
-            if(myLibraryCache.length > 0) {
-                 myLibraryCache.forEach(item => { if(mangaIds.includes(item.manga_id)) librarySet.add(item.manga_id); });
-            } else {
-                 const { data: libData } = await supabase.from('library').select('manga_id').eq('user_id', user.id).in('manga_id', mangaIds);
-                 if (libData) libData.forEach(item => librarySet.add(item.manga_id));
-            }
-        }
-
-        mangas.forEach(manga => {
-            const attr = manga.attributes;
-            const title = attr.title.en || attr.title.es || Object.values(attr.title)[0] || 'Sin Título';
-            const safeTitle = encodeURIComponent(title);
-            const coverRel = manga.relationships.find(r => r.type === 'cover_art');
-            const fileName = coverRel ? coverRel.attributes.fileName : '';
-            const coverUrl = fileName ? PROXY + encodeURIComponent(`${COVER_BASE}/${manga.id}/${fileName}.512.jpg`) : 'https://via.placeholder.com/300x450?text=No+Cover';
-            let flag = ''; if(attr.originalLanguage === 'ja') flag = '🇯🇵'; if(attr.originalLanguage === 'ko') flag = '🇰🇷'; if(attr.originalLanguage === 'zh') flag = '🇨🇳';
-            const isFav = librarySet.has(manga.id);
-            const btnClass = isFav ? "bg-primary text-white shadow-lg shadow-primary/40" : "bg-black/60 text-white/70 hover:bg-primary hover:text-white border border-white/10";
-            const btnIcon = isFav ? "bookmark" : "bookmark_add";
-
-            const card = `
-                <div class="group relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 shadow-xl border border-white/5 transition-transform hover:scale-[1.02] cursor-pointer" onclick="window.location.href='details.html?id=${manga.id}'">
-                    <img class="absolute inset-0 size-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" src="${coverUrl}" loading="lazy" />
-                    <button onclick="toggleQuickSave(event, '${manga.id}', '${safeTitle}', '${coverUrl}', this)" class="absolute top-2 right-2 p-2 rounded-full z-20 transition-all ${btnClass}">
-                        <span class="material-symbols-outlined text-[20px]">${btnIcon}</span>
-                    </button>
-                    <div class="absolute inset-0 manga-card-gradient flex flex-col justify-end p-3">
-                        <h4 class="text-sm font-bold line-clamp-2 leading-tight text-white group-hover:text-primary transition-colors text-shadow">${title}</h4>
-                        <div class="flex items-center gap-2 mt-2">
-                            <span class="text-xs">${flag}</span>
-                            <span class="text-[10px] text-gray-400 capitalize bg-black/50 px-1 rounded">${attr.status || 'Unknown'}</span>
-                        </div>
-                    </div>
-                </div>`;
-            grid.innerHTML += card;
-        });
-
-        if(loadMoreBtn) {
-            if (filterState.offset + 20 < json.total) loadMoreBtn.classList.remove('hidden'); else loadMoreBtn.classList.add('hidden');
-        }
-    } catch (error) {
-        console.error(error);
-        if(isNewSearch) grid.innerHTML = '<p class="col-span-full text-center text-red-400">Error.</p>';
-    }
+    // Llamada especial para cargar más sin borrar lo anterior
+    // Nota: Como performMasterSearch borra el grid, para loadMore necesitarías 
+    // una lógica ligeramente distinta, pero por ahora re-buscar funciona como paginación simple.
+    // Idealmente: performMasterSearch(filterState.query, true) donde true = append mode.
+    performMasterSearch(filterState.query); 
 }
