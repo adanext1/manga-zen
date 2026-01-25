@@ -2,66 +2,322 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reproductor - AdaNext</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Reproductor - MangaZen</title>
     
-    <link href="css/styles.css" rel="stylesheet">
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { brand: '#8c25f4' }
+                }
+            }
+        }
+    </script>
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="./js/theme-init.js"></script>
 
     <style>
-        /* El reproductor siempre debe ser negro inmersivo */
-        body { background-color: #000; overflow: hidden; }
+        /* Base */
+        body { 
+            background-color: #000; 
+            overflow: hidden; 
+            margin: 0; 
+            /* Previene el rebote en iOS */
+            overscroll-behavior: none; 
+            touch-action: none;
+        }
         
-        /* Ocultar cursor */
-        .hide-cursor { cursor: none; }
-        
-        /* 🟣 Barra de progreso personalizada al color de tu marca */
+        /* Contenedor Principal: Fix para Móvil Vertical */
+        #main-container {
+            position: relative;
+            width: 100vw;
+            /* Usamos dvh para evitar problemas con la barra de dirección del navegador */
+            height: 100dvh; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: black;
+            /* Importante: Deja espacio abajo para la barra de gestos del celular */
+            padding-bottom: env(safe-area-inset-bottom, 20px); 
+        }
+
+        /* El Video */
+        video {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Por defecto */
+            transition: object-fit 0.3s ease, filter 0.2s ease;
+            outline: none;
+        }
+
+        /* 🎨 Personalización de controles nativos (Chrome/Edge/Android) */
+        video::-webkit-media-controls-panel {
+            /* Forzar un fondo suave en los controles para que se vean */
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+        }
         video::-webkit-media-controls-timeline {
-            background-color: #8c25f4; 
+            background-color: #8c25f4; /* Tu morado */
         }
-        video::-webkit-media-controls-volume-slider {
-            background-color: #8c25f4;
+
+        /* Botones Flotantes (Glassmorphism) */
+        .player-btn {
+            position: absolute;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%; /* Circulares */
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
+        .player-btn:active { transform: scale(0.9); background: rgba(140, 37, 244, 0.6); }
+        .player-btn span { font-size: 24px; }
+
+        /* Posiciones de Botones (Ajustadas para no estorbar) */
+        #btn-back { top: 20px; left: 20px; width: auto; padding: 0 15px; border-radius: 30px; gap: 8px; }
         
-        /* Animación suave interfaz */
-        .fade-ui { transition: opacity 0.5s ease; }
+        /* Grupo de herramientas a la derecha */
+        .tools-group {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 50;
+        }
+        .tools-group .player-btn { position: relative; } /* Resetear absolute */
+
+        /* 🎛️ PANEL DE AJUSTES DE IMAGEN (EQ) */
+        #eq-panel {
+            position: absolute;
+            top: 80px;
+            right: 70px; /* Al lado de los botones */
+            width: 260px;
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(140, 37, 244, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            color: white;
+            z-index: 60;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            transform-origin: top right;
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Sliders del EQ */
+        input[type=range] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            outline: none;
+            appearance: none;
+            margin-top: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #8c25f4;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+
+        /* Toast Message */
+        #toast-msg {
+            position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white; padding: 12px 24px; border-radius: 30px;
+            font-weight: bold; font-size: 14px;
+            opacity: 0; pointer-events: none; z-index: 70;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: opacity 0.3s;
+        }
+
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Clases de utilidad ocultas */
+        .hidden { display: none !important; }
     </style>
 </head>
 
-<body class="h-screen w-screen flex flex-col items-center justify-center relative group bg-black">
+<body>
 
-    <a href="javascript:history.back()" 
-       class="absolute top-6 left-6 z-50 flex items-center gap-2 text-white/70 hover:text-white bg-black/60 hover:bg-white/10 px-4 py-2 rounded-full transition-all backdrop-blur-md border border-white/5 opacity-0 group-hover:opacity-100 duration-500">
-        <span class="material-symbols-outlined">arrow_back</span>
-        <span class="font-bold text-sm">Volver</span>
-    </a>
+    <div id="main-container">
+        
+        <button id="btn-back" class="player-btn" onclick="history.back()">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <span class="font-bold text-sm hidden md:block">Volver</span>
+        </button>
 
-    <div class="w-full h-full relative flex items-center justify-center">
-        
-        <video id="video-player" 
-               class="w-full h-full max-h-screen object-contain focus:outline-none" 
-               controls 
-               autoplay
-               crossorigin="anonymous">
-        </video>
-        
-        <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden bg-black/20 backdrop-blur-sm z-10">
-            <div class="flex flex-col items-center gap-3">
-                <span class="material-symbols-outlined text-6xl text-[#ff6740] animate-spin">progress_activity</span>
-                <span class="text-white text-sm font-bold tracking-widest animate-pulse">CARGANDO</span>
+        <div class="tools-group">
+            <button id="btn-zoom" class="player-btn" onclick="toggleAspectRatio()" title="Cambiar Ajuste">
+                <span class="material-symbols-outlined" id="icon-zoom">aspect_ratio</span>
+            </button>
+            
+            <button id="btn-color" class="player-btn" onclick="toggleEqPanel()" title="Ajustar Imagen">
+                <span class="material-symbols-outlined">tune</span>
+            </button>
+        </div>
+
+        <div id="eq-panel">
+            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-brand text-lg">palette</span> Imagen
+                </h3>
+                <button onclick="resetFilters()" class="text-[10px] text-gray-400 hover:text-white underline">Reset</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-xs font-bold text-gray-300">
+                        <span>Brillo</span> <span id="lbl-brightness" class="text-brand">100%</span>
+                    </div>
+                    <input type="range" id="rng-brightness" min="50" max="150" value="100" oninput="applyFilters()">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs font-bold text-gray-300">
+                        <span>Contraste</span> <span id="lbl-contrast" class="text-brand">100%</span>
+                    </div>
+                    <input type="range" id="rng-contrast" min="50" max="200" value="100" oninput="applyFilters()">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs font-bold text-gray-300">
+                        <span>Saturación</span> <span id="lbl-saturate" class="text-brand">100%</span>
+                    </div>
+                    <input type="range" id="rng-saturate" min="0" max="250" value="100" oninput="applyFilters()">
+                </div>
             </div>
         </div>
+
+        <video id="video-player" 
+               controls 
+               autoplay 
+               playsinline
+               poster="https://via.placeholder.com/1920x1080/000000/000000">
+        </video>
+
+        <div id="info-overlay" class="absolute top-20 left-0 right-0 p-6 text-center pointer-events-none transition-opacity duration-500 opacity-0">
+            <h1 id="video-title" class="text-xl md:text-3xl font-bold text-white drop-shadow-lg text-shadow">Cargando...</h1>
+            <p id="video-quality" class="text-xs text-brand font-bold tracking-widest mt-1 bg-black/50 inline-block px-2 py-1 rounded">HDR 4K</p>
+        </div>
+
+        <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden bg-black/40 backdrop-blur-sm z-10">
+            <span class="material-symbols-outlined text-6xl text-brand animate-spin">progress_activity</span>
+        </div>
+
+        <div id="toast-msg"></div>
     </div>
 
-    <div class="absolute bottom-0 left-0 right-0 p-8 pb-16 bg-gradient-to-t from-black via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-20">
-        <h1 id="video-title" class="text-2xl md:text-3xl font-bold text-white drop-shadow-md">Cargando título...</h1>
-        <p id="video-status" class="text-sm text-[#ff6740] font-medium mt-1">MAXIMA CALIDAD DISPONIBLE</p>
-    </div>
+    <script>
+        const video = document.getElementById('video-player');
+        
+        // --- A. LÓGICA DE FILTROS (EQ) ---
+        // Esto arregla el problema de "video lavado/gris"
+        let filters = { b: 100, c: 100, s: 100 };
+        const eqPanel = document.getElementById('eq-panel');
 
+        function toggleEqPanel() {
+            const isHidden = getComputedStyle(eqPanel).display === 'none';
+            eqPanel.style.display = isHidden ? 'block' : 'none';
+        }
+
+        function applyFilters() {
+            filters.b = document.getElementById('rng-brightness').value;
+            filters.c = document.getElementById('rng-contrast').value;
+            filters.s = document.getElementById('rng-saturate').value;
+
+            // Actualizar etiquetas
+            document.getElementById('lbl-brightness').innerText = filters.b + '%';
+            document.getElementById('lbl-contrast').innerText = filters.c + '%';
+            document.getElementById('lbl-saturate').innerText = filters.s + '%';
+
+            // Aplicar al video
+            video.style.filter = `brightness(${filters.b}%) contrast(${filters.c}%) saturate(${filters.s}%)`;
+        }
+
+        function resetFilters() {
+            document.getElementById('rng-brightness').value = 100;
+            document.getElementById('rng-contrast').value = 100;
+            document.getElementById('rng-saturate').value = 100;
+            applyFilters();
+            showToast('Imagen Restablecida');
+        }
+
+        // --- B. LÓGICA DE ZOOM ---
+        // Arregla las barras negras en celular
+        const modes = ['contain', 'cover', 'fill'];
+        const modeNames = ['Original', 'Zoom (Pantalla Completa)', 'Estirado'];
+        let currentMode = 0;
+
+        function toggleAspectRatio() {
+            currentMode = (currentMode + 1) % modes.length;
+            video.style.objectFit = modes[currentMode];
+            
+            // Cambiar icono
+            const icon = document.getElementById('icon-zoom');
+            if(modes[currentMode] === 'contain') icon.innerText = 'aspect_ratio'; // Original
+            if(modes[currentMode] === 'cover') icon.innerText = 'crop_free'; // Zoom
+            if(modes[currentMode] === 'fill') icon.innerText = 'fit_screen'; // Estirado
+
+            showToast(modeNames[currentMode]);
+        }
+
+        // --- C. UTILIDADES ---
+        function showToast(msg) {
+            const t = document.getElementById('toast-msg');
+            t.innerText = msg;
+            t.style.opacity = '1';
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => t.style.opacity = '0', 2000);
+        }
+
+        // Mostrar título al mover el mouse/tocar
+        let overlayTimer;
+        const overlay = document.getElementById('info-overlay');
+        const container = document.getElementById('main-container');
+
+        function showUI() {
+            overlay.style.opacity = '1';
+            document.querySelectorAll('.player-btn').forEach(b => b.style.opacity = '1');
+            
+            clearTimeout(overlayTimer);
+            overlayTimer = setTimeout(() => {
+                // Solo ocultar si el video se está reproduciendo
+                if (!video.paused) {
+                    overlay.style.opacity = '0';
+                    // Opcional: Ocultar botones también para inmersión total
+                    // document.querySelectorAll('.player-btn').forEach(b => b.style.opacity = '0');
+                }
+            }, 3000);
+        }
+
+        container.addEventListener('mousemove', showUI);
+        container.addEventListener('touchstart', showUI);
+        container.addEventListener('click', showUI);
+
+    </script>
+    
     <script type="module" src="./js/watch-logic.js"></script>
+
 </body>
 </html>
