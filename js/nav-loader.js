@@ -4,9 +4,9 @@
 const NAV_LINKS = [
     { name: 'Inicio',     icon: 'home',          href: 'dashboard.html' },
     { name: 'Biblioteca', icon: 'library_books', href: 'library.html' },
-    { name: 'Peticiones', icon: 'assignment_add', href: 'requests.html' },
+    { name: 'Peticiones', icon: 'playlist_add',  href: 'requests.html' }, // Icono ajustado
     
-    // 🔥 ESTE ES EL BOTÓN FLOTANTE (isFloating: true)
+    // 🔥 BOTÓN FLOTANTE (Explorar)
     { name: 'Explorar',   icon: 'search',        href: 'search.html', isFloating: true },
     
     { name: 'Historial',  icon: 'history',       href: 'history.html' },
@@ -16,16 +16,19 @@ const NAV_LINKS = [
 document.addEventListener('DOMContentLoaded', () => {
     renderSidebar();
     renderMobileNav();
-    if(typeof renderHeader === 'function') renderHeader(); // Si existe la función
 });
 
-// --- LOGICA PARA DETECTAR PÁGINA ACTIVA ---
+// --- LÓGICA PARA DETECTAR PÁGINA ACTIVA ---
 function isActive(href) {
-    const currentPath = window.location.pathname;
-    return currentPath.includes(href) || (href === 'dashboard.html' && (currentPath === '/' || currentPath.endsWith('/')));
+    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+    // Manejo especial para dashboard/index
+    if ((href === 'dashboard.html' || href === 'index.html') && (currentPath === '' || currentPath === 'index.html' || currentPath === 'dashboard.html')) {
+        return true;
+    }
+    return currentPath.includes(href);
 }
 
-// --- 2. RENDERIZAR SIDEBAR (ESCRITORIO - IGUAL QUE ANTES) ---
+// --- 2. RENDERIZAR SIDEBAR (ESCRITORIO) ---
 function renderSidebar() {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
@@ -34,60 +37,74 @@ function renderSidebar() {
 
     NAV_LINKS.forEach(link => {
         const active = isActive(link.href);
-        const classes = active 
-            ? "bg-primary text-white shadow-lg shadow-primary/20" 
-            : "text-gray-400 hover:text-white hover:bg-white/5";
+        
+        // 🎨 ESTILOS MODULARES (Usan 'brand' y 'white')
+        const activeClasses = "bg-brand text-white shadow-[0_0_20px_rgba(140,37,244,0.3)] font-bold";
+        const inactiveClasses = "text-gray-400 hover:text-white hover:bg-white/5 font-medium";
 
+        // Renderizado del enlace
         linksHtml += `
-            <a href="${link.href}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${classes}">
-                <span class="material-symbols-outlined ${active ? 'fill-1' : ''}">${link.icon}</span>
-                ${link.name}
+            <a href="${link.href}" class="flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${active ? activeClasses : inactiveClasses}">
+                <span class="material-symbols-outlined text-[24px] ${active ? '' : 'group-hover:scale-110 transition-transform'}">
+                    ${link.icon}
+                </span>
+                <span class="text-sm tracking-wide">${link.name}</span>
             </a>
         `;
     });
 
+    // Inyectamos el HTML completo del sidebar
     sidebarContainer.innerHTML = `
-        <div>
+        <div class="flex flex-col h-full">
             <div class="flex items-center gap-3 mb-10 px-2">
-                <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/20 shadow-[0_0_15px_rgba(140,37,244,0.3)]">
-                    <span class="material-symbols-outlined text-[24px]">auto_stories</span>
+                <div class="w-10 h-10 rounded-xl bg-brand/20 flex items-center justify-center text-brand border border-brand/30 shadow-[0_0_15px_rgba(140,37,244,0.3)]">
+                    <span class="material-symbols-outlined text-2xl">menu_book</span>
                 </div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">MangaZen</h1>
+                <h1 class="text-xl font-bold tracking-tight text-white">MangaZen</h1>
             </div>
-            <nav class="space-y-2">${linksHtml}</nav>
+
+            <nav class="flex-1 space-y-2">
+                ${linksHtml}
+            </nav>
+
+            <div id="sidebar-user-slot" class="mt-auto"></div>
         </div>
-        <div id="sidebar-user-slot" class="mt-auto"></div>
     `;
 }
 
-// --- 3. RENDERIZAR MENU MOVIL (DISEÑO FLOTANTE) ---
+// --- 3. RENDERIZAR MENÚ MÓVIL (FLOTANTE) ---
 function renderMobileNav() {
     const mobileContainer = document.getElementById('mobile-nav-container');
     if (!mobileContainer) return;
 
-    // APLICAR CLASES AL CONTENEDOR (Para darle altura y fondo)
-    mobileContainer.className = "md:hidden fixed bottom-0 left-0 right-0 bg-[#0f0f0f]/95 backdrop-blur-xl border-t border-white/5 pb-safe pt-2 px-6 flex justify-between items-center z-50 h-20";
+    // Estilos del contenedor móvil (Vidrio + Borde)
+    mobileContainer.className = "md:hidden fixed bottom-0 inset-x-0 bg-base/95 backdrop-blur-xl border-t border-white/5 pb-safe pt-2 px-6 flex justify-between items-center z-50 h-20";
 
     let linksHtml = '';
 
     NAV_LINKS.forEach(link => {
+        // En móvil a veces queremos ocultar algunos botones si son muchos, 
+        // aquí mostramos los principales.
+        if (['Biblioteca', 'Peticiones'].includes(link.name)) return; // Opcional: Ocultar estos en móvil para que quepan
+
         const active = isActive(link.href);
 
         if (link.isFloating) {
-            // --- DISEÑO DEL BOTÓN FLOTANTE (LUPA MORADA) ---
+            // 🔥 BOTÓN FLOTANTE (Lupa Morada)
+            // Nota el 'border-base': usa el color de fondo para crear el efecto de recorte
             linksHtml += `
                 <a href="${link.href}" 
-                   class="flex items-center justify-center -mt-10 size-14 bg-primary text-white rounded-full shadow-[0_0_20px_rgba(140,37,244,0.4)] active:scale-95 transition-transform border-4 border-[#0f0f0f]">
+                   class="relative -top-6 w-14 h-14 bg-brand text-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(140,37,244,0.5)] border-[5px] border-base transition-transform active:scale-95">
                     <span class="material-symbols-outlined text-3xl">${link.icon}</span>
                 </a>
             `;
         } else {
-            // --- DISEÑO DE LOS BOTONES NORMALES ---
-            const colorClass = active ? "text-primary" : "text-gray-500 hover:text-white";
+            // BOTONES NORMALES
+            const colorClass = active ? "text-brand" : "text-gray-500 hover:text-gray-300";
             
             linksHtml += `
-                <a href="${link.href}" class="flex flex-col items-center gap-1 group w-12 ${colorClass}">
-                    <span class="material-symbols-outlined text-[26px] group-active:scale-95 transition-transform ${active ? 'fill-1' : ''}">
+                <a href="${link.href}" class="flex flex-col items-center gap-1 w-12 transition-colors ${colorClass}">
+                    <span class="material-symbols-outlined text-[26px] ${active ? 'filled-icon' : ''}">
                         ${link.icon}
                     </span>
                     <span class="text-[10px] font-medium">${link.name}</span>

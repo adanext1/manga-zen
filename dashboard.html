@@ -6,27 +6,25 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>AdaNext Dashboard</title>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="css/styles.css" rel="stylesheet">
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <script src="./js/theme-init.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: { primary: '#ff6740', background: '#0f0f0f', surface: '#18181b' }
-                }
-            }
-        }
-    </script>
+
     <style>
+        /* Ocultar Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Clase para cuando arrastras un elemento */
-        .sortable-ghost { opacity: 0.4; background: #ff674020; }
+
+        /* ✅ 2. ARRASTRAR (Drag & Drop) - Ajustado al Morado */
+        .sortable-ghost { 
+            opacity: 0.4; 
+            background: #8b5cf640; /* Morado con transparencia (antes era naranja) */
+            border: 1px dashed #8b5cf6; /* Borde morado para guía visual */
+        }
         .sortable-drag { cursor: grabbing; }
     </style>
 </head>

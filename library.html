@@ -5,34 +5,11 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Mi Biblioteca</title>
     
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="css/styles.css" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    
     <script src="./js/theme-init.js"></script>
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: { primary: '#ff6740', background: '#0f0f0f', surface: '#18181b' }
-                }
-            }
-        }
-    </script>
-    <style>
-        .glass-header { background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Animación suave para cambio de tabs */
-        .tab-btn { position: relative; color: #a1a1aa; }
-        .tab-btn.active { color: white; }
-        .tab-btn.active::after {
-            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
-            height: 2px; background: #ff6740; border-radius: 2px 2px 0 0;
-            box-shadow: 0 -2px 10px rgba(255, 103, 64, 0.5);
-        }
-    </style>
 </head>
 
 <body class="bg-background text-white h-screen flex overflow-hidden selection:bg-primary selection:text-white font-sans">

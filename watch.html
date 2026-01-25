@@ -5,21 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reproductor - AdaNext</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="css/styles.css" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="./js/theme-init.js"></script>
 
     <style>
+        /* El reproductor siempre debe ser negro inmersivo */
         body { background-color: #000; overflow: hidden; }
         
-        /* Ocultar cursor si no se mueve el mouse */
+        /* Ocultar cursor */
         .hide-cursor { cursor: none; }
         
-        /* Personalizar la barra de progreso del video al color naranja */
-        video::-webkit-media-controls-timeline { background-color: #ff6740; }
+        /* 🟣 Barra de progreso personalizada al color de tu marca */
+        video::-webkit-media-controls-timeline {
+            background-color: #8c25f4; 
+        }
+        video::-webkit-media-controls-volume-slider {
+            background-color: #8c25f4;
+        }
         
-        /* Animación suave para la interfaz */
+        /* Animación suave interfaz */
         .fade-ui { transition: opacity 0.5s ease; }
     </style>
 </head>

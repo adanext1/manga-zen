@@ -6,32 +6,9 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Acceso Seguro</title>
     
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="css/styles.css" rel="stylesheet">
     
     <script src="./js/theme-init.js"></script>
-    
-    <style>
-        /* Estilos específicos SOLO para el Login (Fondo manga y tarjeta especial) */
-        
-        .login-glass {
-            background: rgba(26, 16, 35, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(140, 37, 244, 0.2);
-            box-shadow: 0 0 40px rgba(140, 37, 244, 0.15);
-        }
-
-        .manga-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; opacity: 0.03; z-index: 0;
-            background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuAtpNedXyu3aURwLFYny2kH3k2M_1m-IjoC2R9OwV8xVyimA6wjBqficTfsHBagSRfJNkqEnCqCKvw0FSzfM4V0gVSEtGuC5q4xy3wjztN_WnqggOjeJaovd04SdzwSEL0rbt-DPARAqPLAq0FhVQGWZIuvEc6nMzgZ8_ZJfRfc9yqhhmG8WSdfrimG1gb0CkUT8pF9AowSgLwJnhctCj0xpABE0fTi95LK9KbH9ESozc4AGKO517bYkDfQVPCGgQxHVWe6V_0QzZY);
-            background-size: cover; mix-blend-mode: luminosity;
-        }
-
-        /* Ocultar el ojo de contraseña por defecto de Edge/Chrome */
-        input[type="password"]::-ms-reveal,
-        input[type="password"]::-ms-clear { display: none; }
-    </style>
 </head>
 
 <body class="bg-background-dark font-display text-white overflow-hidden h-screen flex flex-col items-center justify-center">
