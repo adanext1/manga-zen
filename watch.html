@@ -7,153 +7,72 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { brand: '#8c25f4' }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { brand: '#8c25f4' } } } }
     </script>
-
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
-        /* Base */
-        body { 
-            background-color: #000; 
-            overflow: hidden; 
-            margin: 0; 
-            /* Previene el rebote en iOS */
-            overscroll-behavior: none; 
-            touch-action: none;
-        }
+        /* Bloquear todo scroll y rebote en móvil */
+        body { background-color: #000; overflow: hidden; margin: 0; overscroll-behavior: none; touch-action: none; }
         
-        /* Contenedor Principal: Fix para Móvil Vertical */
         #main-container {
-            position: relative;
-            width: 100vw;
-            /* Usamos dvh para evitar problemas con la barra de dirección del navegador */
-            height: 100dvh; 
-            display: flex;
-            align-items: center;
+            position: relative; 
+            width: 100vw; 
+            height: 100dvh; /* Altura dinámica real del móvil */
+            display: flex; 
+            align-items: center; 
             justify-content: center;
-            background: black;
-            /* Importante: Deja espacio abajo para la barra de gestos del celular */
-            padding-bottom: env(safe-area-inset-bottom, 20px); 
+            background: black; 
+            /* Importante: Separa el contenido de la barra de gestos inferior */
+            padding-bottom: env(safe-area-inset-bottom, 40px); 
         }
 
-        /* El Video */
         video {
-            width: 100%;
-            height: 100%;
-            max-height: 100%;
-            object-fit: contain; /* Por defecto */
-            transition: object-fit 0.3s ease, filter 0.2s ease;
-            outline: none;
+            width: 100%; height: 100%; object-fit: contain;
+            transition: object-fit 0.3s ease, filter 0.2s ease; outline: none;
         }
 
-        /* 🎨 Personalización de controles nativos (Chrome/Edge/Android) */
-        video::-webkit-media-controls-panel {
-            /* Forzar un fondo suave en los controles para que se vean */
-            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
-        }
-        video::-webkit-media-controls-timeline {
-            background-color: #8c25f4; /* Tu morado */
-        }
-
-        /* Botones Flotantes (Glassmorphism) */
+        /* 🚫 OCULTAR BOTONES NATIVOS QUE ROMPEN LA UI EN MÓVIL */
+        video::-webkit-media-controls-fullscreen-button { display: none !important; }
+        
+        /* Fondo más oscuro para los controles nativos para que se vean */
+        video::-webkit-media-controls-panel { background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); }
+        
+        /* Botones Flotantes (Más oscuros y visibles) */
         .player-btn {
-            position: absolute;
-            z-index: 50;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.7); /* Fondo más oscuro para contraste */
             backdrop-filter: blur(8px);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%; /* Circulares */
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            -webkit-tap-highlight-color: transparent;
+            color: white; 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%; width: 50px; height: 50px; /* Más grandes para el dedo */
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Sombra para resaltar */
         }
-        .player-btn:active { transform: scale(0.9); background: rgba(140, 37, 244, 0.6); }
-        .player-btn span { font-size: 24px; }
+        .player-btn:active { transform: scale(0.9); background: rgba(140, 37, 244, 0.8); }
 
-        /* Posiciones de Botones (Ajustadas para no estorbar) */
-        #btn-back { top: 20px; left: 20px; width: auto; padding: 0 15px; border-radius: 30px; gap: 8px; }
+        /* Posiciones: Más separadas de los bordes para evitar toques falsos */
+        #btn-back { position: absolute; top: 40px; left: 30px; z-index: 50; width: auto; padding: 0 16px; border-radius: 30px; gap: 8px; }
         
-        /* Grupo de herramientas a la derecha */
         .tools-group {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 50;
+            position: absolute; top: 40px; right: 30px;
+            display: flex; flex-direction: column; gap: 20px; z-index: 50;
         }
-        .tools-group .player-btn { position: relative; } /* Resetear absolute */
 
-        /* 🎛️ PANEL DE AJUSTES DE IMAGEN (EQ) */
+        /* Panel EQ (Mejorado para móvil) */
         #eq-panel {
-            position: absolute;
-            top: 80px;
-            right: 70px; /* Al lado de los botones */
-            width: 260px;
-            background: rgba(15, 15, 15, 0.95);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(140, 37, 244, 0.3);
-            border-radius: 20px;
-            padding: 20px;
-            color: white;
-            z-index: 60;
-            display: none;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            transform-origin: top right;
-            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: absolute; top: 100px; right: 80px; width: 240px;
+            background: rgba(10, 10, 10, 0.98); /* Casi negro sólido */
+            border: 1px solid rgba(140, 37, 244, 0.5); border-radius: 16px;
+            padding: 16px; color: white; z-index: 60; display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
         }
 
-        /* Sliders del EQ */
-        input[type=range] {
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 2px;
-            outline: none;
-            appearance: none;
-            margin-top: 8px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #8c25f4;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid white;
-        }
+        /* Sliders más gordos para facilitar el toque */
+        input[type=range] { width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; outline: none; margin-top: 10px; margin-bottom: 10px; }
+        input[type=range]::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; background: #8c25f4; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px black; }
 
-        /* Toast Message */
-        #toast-msg {
-            position: absolute;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white; padding: 12px 24px; border-radius: 30px;
-            font-weight: bold; font-size: 14px;
-            opacity: 0; pointer-events: none; z-index: 70;
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: opacity 0.3s;
-        }
-
-        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        
-        /* Clases de utilidad ocultas */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -168,71 +87,59 @@
         </button>
 
         <div class="tools-group">
-            <button id="btn-zoom" class="player-btn" onclick="toggleAspectRatio()" title="Cambiar Ajuste">
+            <button id="btn-fullscreen" class="player-btn" onclick="toggleCustomFullscreen()">
+                <span class="material-symbols-outlined" id="icon-fullscreen">fullscreen</span>
+            </button>
+            <button id="btn-zoom" class="player-btn" onclick="toggleAspectRatio()">
                 <span class="material-symbols-outlined" id="icon-zoom">aspect_ratio</span>
             </button>
-            
-            <button id="btn-color" class="player-btn" onclick="toggleEqPanel()" title="Ajustar Imagen">
+            <button id="btn-color" class="player-btn" onclick="toggleEqPanel()">
                 <span class="material-symbols-outlined">tune</span>
             </button>
         </div>
 
         <div id="eq-panel">
             <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-brand text-lg">palette</span> Imagen
-                </h3>
-                <button onclick="resetFilters()" class="text-[10px] text-gray-400 hover:text-white underline">Reset</button>
+                <h3 class="text-sm font-bold text-white">Ajustes de Imagen</h3>
+                <button onclick="resetFilters()" class="text-xs text-brand underline">Reset</button>
             </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <div class="flex justify-between text-xs font-bold text-gray-300">
-                        <span>Brillo</span> <span id="lbl-brightness" class="text-brand">100%</span>
-                    </div>
-                    <input type="range" id="rng-brightness" min="50" max="150" value="100" oninput="applyFilters()">
-                </div>
-
-                <div>
-                    <div class="flex justify-between text-xs font-bold text-gray-300">
-                        <span>Contraste</span> <span id="lbl-contrast" class="text-brand">100%</span>
-                    </div>
-                    <input type="range" id="rng-contrast" min="50" max="200" value="100" oninput="applyFilters()">
-                </div>
-
-                <div>
-                    <div class="flex justify-between text-xs font-bold text-gray-300">
-                        <span>Saturación</span> <span id="lbl-saturate" class="text-brand">100%</span>
-                    </div>
-                    <input type="range" id="rng-saturate" min="0" max="250" value="100" oninput="applyFilters()">
-                </div>
-            </div>
+            <div><span class="text-xs font-bold text-gray-400">Brillo</span> <input type="range" id="rng-brightness" min="50" max="150" value="100" oninput="applyFilters()"></div>
+            <div><span class="text-xs font-bold text-gray-400">Contraste</span> <input type="range" id="rng-contrast" min="50" max="200" value="100" oninput="applyFilters()"></div>
+            <div><span class="text-xs font-bold text-gray-400">Saturación (Color)</span> <input type="range" id="rng-saturate" min="0" max="250" value="100" oninput="applyFilters()"></div>
         </div>
 
-        <video id="video-player" 
-               controls 
-               autoplay 
-               playsinline
-               poster="https://via.placeholder.com/1920x1080/000000/000000">
-        </video>
+        <video id="video-player" controls autoplay playsinline webkit-playsinline></video>
 
-        <div id="info-overlay" class="absolute top-20 left-0 right-0 p-6 text-center pointer-events-none transition-opacity duration-500 opacity-0">
-            <h1 id="video-title" class="text-xl md:text-3xl font-bold text-white drop-shadow-lg text-shadow">Cargando...</h1>
-            <p id="video-quality" class="text-xs text-brand font-bold tracking-widest mt-1 bg-black/50 inline-block px-2 py-1 rounded">HDR 4K</p>
-        </div>
-
-        <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden bg-black/40 backdrop-blur-sm z-10">
-            <span class="material-symbols-outlined text-6xl text-brand animate-spin">progress_activity</span>
-        </div>
-
-        <div id="toast-msg"></div>
+        <div id="toast-msg" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 px-6 py-3 rounded-full text-white font-bold opacity-0 transition-opacity pointer-events-none z-[100]"></div>
     </div>
 
     <script>
         const video = document.getElementById('video-player');
-        
-        // --- A. LÓGICA DE FILTROS (EQ) ---
-        // Esto arregla el problema de "video lavado/gris"
+        const container = document.getElementById('main-container');
+
+        // --- 1. FULLSCREEN INTELIGENTE PARA MÓVIL ---
+        function toggleCustomFullscreen() {
+            // Intentamos la API estándar primero
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen(); // Safari Mobile
+                } else if (video.webkitEnterFullscreen) {
+                    // ÚLTIMO RECURSO (iPhone viejo): Esto romperá los filtros, pero es mejor que nada.
+                    // Idealmente, en iOS moderno, 'playsinline' + CSS 100dvh ya se siente como fullscreen.
+                    video.webkitEnterFullscreen();
+                    return; 
+                }
+                document.getElementById('icon-fullscreen').innerText = 'fullscreen_exit';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                document.getElementById('icon-fullscreen').innerText = 'fullscreen';
+            }
+        }
+
+        // --- 2. FILTROS (EQ) ---
         let filters = { b: 100, c: 100, s: 100 };
         const eqPanel = document.getElementById('eq-panel');
 
@@ -245,13 +152,8 @@
             filters.b = document.getElementById('rng-brightness').value;
             filters.c = document.getElementById('rng-contrast').value;
             filters.s = document.getElementById('rng-saturate').value;
-
-            // Actualizar etiquetas
-            document.getElementById('lbl-brightness').innerText = filters.b + '%';
-            document.getElementById('lbl-contrast').innerText = filters.c + '%';
-            document.getElementById('lbl-saturate').innerText = filters.s + '%';
-
-            // Aplicar al video
+            // Aplicamos filtro. NOTA: En iPhone, si se abre el reproductor nativo, esto se ignorará.
+            // Por eso es vital usar el botón de fullscreen personalizado de arriba.
             video.style.filter = `brightness(${filters.b}%) contrast(${filters.c}%) saturate(${filters.s}%)`;
         }
 
@@ -263,61 +165,36 @@
             showToast('Imagen Restablecida');
         }
 
-        // --- B. LÓGICA DE ZOOM ---
-        // Arregla las barras negras en celular
+        // --- 3. ZOOM ---
         const modes = ['contain', 'cover', 'fill'];
-        const modeNames = ['Original', 'Zoom (Pantalla Completa)', 'Estirado'];
+        const modeNames = ['Original', 'Zoom (Llenar Pantalla)', 'Estirado'];
         let currentMode = 0;
 
         function toggleAspectRatio() {
             currentMode = (currentMode + 1) % modes.length;
             video.style.objectFit = modes[currentMode];
-            
-            // Cambiar icono
-            const icon = document.getElementById('icon-zoom');
-            if(modes[currentMode] === 'contain') icon.innerText = 'aspect_ratio'; // Original
-            if(modes[currentMode] === 'cover') icon.innerText = 'crop_free'; // Zoom
-            if(modes[currentMode] === 'fill') icon.innerText = 'fit_screen'; // Estirado
-
             showToast(modeNames[currentMode]);
         }
 
-        // --- C. UTILIDADES ---
         function showToast(msg) {
             const t = document.getElementById('toast-msg');
-            t.innerText = msg;
-            t.style.opacity = '1';
-            clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => t.style.opacity = '0', 2000);
+            t.innerText = msg; t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 2000);
         }
 
-        // Mostrar título al mover el mouse/tocar
-        let overlayTimer;
-        const overlay = document.getElementById('info-overlay');
-        const container = document.getElementById('main-container');
-
-        function showUI() {
-            overlay.style.opacity = '1';
-            document.querySelectorAll('.player-btn').forEach(b => b.style.opacity = '1');
-            
-            clearTimeout(overlayTimer);
-            overlayTimer = setTimeout(() => {
-                // Solo ocultar si el video se está reproduciendo
-                if (!video.paused) {
-                    overlay.style.opacity = '0';
-                    // Opcional: Ocultar botones también para inmersión total
-                    // document.querySelectorAll('.player-btn').forEach(b => b.style.opacity = '0');
+        // Ocultar UI al no tocar
+        let uiTimer;
+        container.addEventListener('touchstart', () => {
+            document.querySelectorAll('.player-btn, .tools-group').forEach(el => el.style.opacity = '1');
+            clearTimeout(uiTimer);
+            uiTimer = setTimeout(() => {
+                if (!video.paused && getComputedStyle(eqPanel).display === 'none') {
+                    document.querySelectorAll('.player-btn, .tools-group').forEach(el => el.style.opacity = '0');
                 }
-            }, 3000);
-        }
-
-        container.addEventListener('mousemove', showUI);
-        container.addEventListener('touchstart', showUI);
-        container.addEventListener('click', showUI);
+            }, 4000); // 4 segundos en móvil
+        });
 
     </script>
-    
     <script type="module" src="./js/watch-logic.js"></script>
-
 </body>
 </html>
