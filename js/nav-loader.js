@@ -85,7 +85,7 @@ function renderMobileNav() {
     NAV_LINKS.forEach(link => {
         // En móvil a veces queremos ocultar algunos botones si son muchos, 
         // aquí mostramos los principales.
-        if (['Biblioteca', 'Peticiones'].includes(link.name)) return; // Opcional: Ocultar estos en móvil para que quepan
+         // Opcional: Ocultar estos en móvil para que quepan
 
         const active = isActive(link.href);
 
